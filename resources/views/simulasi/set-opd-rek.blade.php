@@ -80,18 +80,19 @@
                             <tr>
                                 <td>{{ $index + 1 }}</td>
                                 <td>
-                                    <input type="hidden" name="kode_rekening[]" value="{{ $row->kode_rekening }}">
-                                    {{ $row->kode_rekening }}
+                                     <input type="hidden" name="kode_rekening[]" value="{{ $row->kode_rekening }}">
+    <span>{{ $row->kode_rekening }}</span>
                                 </td>
                                 <td>{{ Str::limit($row->nama_rekening, 30) }}</td>
                                 <td class="text-end pagu-original" data-value="{{ $row->pagu_original }}">
                                     {{ number_format($row->pagu_original, 0, ',', '.') }}
                                 </td>
-                                <td>
-                                    <input type="number" class="form-control persentase-penyesuaian" 
-                                           name="persentase_penyesuaian[]" 
-                                           value="{{ $row->persentase_penyesuaian }}" min="0" max="100" step="0.01">
-                                </td>
+                                <td data-export="{{ $row->persentase_penyesuaian }}">
+    <input type="number" class="form-control persentase-penyesuaian" 
+           name="persentase_penyesuaian[]" 
+           value="{{ $row->persentase_penyesuaian }}" min="0" max="100" step="0.01">
+    
+</td>
                                 <td class="text-end nilai-penyesuaian">{{ number_format($nilai_penyesuaian, 0, ',', '.') }}</td>
                                 <td class="text-end pagu-setelah">{{ number_format($pagu_setelah, 0, ',', '.') }}</td>
                             </tr>
@@ -158,8 +159,37 @@
             buttons: [
                 { extend: 'copy', text: 'Copy' },
                 { extend: 'csv', text: 'CSV' },
-                { extend: 'excel', text: 'Excel' },
-                { extend: 'pdf', text: 'PDF', orientation: 'landscape' },
+                { 
+            extend: 'excelHtml5', 
+            text: 'Export Excel',
+            exportOptions: {
+                columns: ':visible',
+                format: {
+                    body: function (data, row, column, node) {
+                        // Ambil data dari atribut data-export jika ada
+                        let exportData = $(node).attr('data-export');
+                        if (exportData) {
+                            return exportData; // Pastikan hanya data yang dikirim ke Excel
+                        }
+                        // Hapus HTML yang masih tersisa
+                        return data.replace(/<[^>]*>?/gm, '');
+                    }
+                }
+            }
+        },
+                { extend: 'pdf', 
+            text: 'PDF', 
+            orientation: 'landscape',
+            customize: function(doc) {
+                // Menghapus format angka yang bisa menyebabkan error dalam PDF
+                doc.content[1].table.body.forEach(function(row) {
+                    row.forEach(function(cell) {
+                        if (!isNaN(cell.text)) {
+                            cell.text = cell.text.replace(/\./g, ''); // Hapus pemisah ribuan
+                        }
+                    });
+                });
+            } },
                 { extend: 'print', text: 'Print' }
             ],
             paging: false,
