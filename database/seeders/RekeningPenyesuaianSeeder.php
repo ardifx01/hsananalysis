@@ -13,32 +13,11 @@ class RekeningPenyesuaianSeeder extends Seeder
 {
     public function run()
     {
-        $filePath = storage_path('app/public/PERSENTASE.xlsx'); // Sesuaikan path jika perlu
+        // Baca file JSON
+        $json = file_get_contents(database_path('seeders/rekening_penyesuaian.json'));
+        $data = json_decode($json, true);
 
-        if (!file_exists($filePath)) {
-            $this->command->error("File Excel tidak ditemukan: $filePath");
-            return;
-        }
-
-        // Load file Excel
-        $spreadsheet = IOFactory::load($filePath);
-        $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray();
-
-        // Mulai dari baris kedua (baris pertama adalah header)
-        foreach ($rows as $index => $row) {
-            if ($index === 0) continue;
-
-            DB::table('rekening_penyesuaian')->updateOrInsert([
-                'kode_rekening' => trim($row[0]),
-            ], [
-                'nama_rekening' => trim($row[1]),
-                'persentase_penyesuaian' => (float) $row[2],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        $this->command->info('Seeder Rekening Penyesuaian berhasil dijalankan!');
+        // Masukkan data ke dalam database
+        DB::table('rekening_penyesuaian')->insert($data);
     }
 }
