@@ -246,13 +246,9 @@
                         text: 'Export Excel',
                         footer: true,
                         filename: function() {
-                            var namaOpd = $("#kode_opd option:selected").text().trim();
-                            return namaOpd ? namaOpd.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_') : 'Export_OPD';
-                        },
-                        
-            title: function() {
-                return $("#kode_opd option:selected").text().trim();
-            },
+                        var namaOpd = $("#kode_opd option:selected").text().trim();
+                        return namaOpd ? namaOpd.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_') : 'Export_OPD';
+                    },
                         exportOptions: {
                             columns: ':visible',
                             format: {

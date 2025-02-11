@@ -19,6 +19,18 @@
 <style>
     .table-sm th, .table-sm td { padding: 6px 10px; font-size: 12px; }
     .btn-container { margin-bottom: 10px; }
+
+
+     
+
+        td.nama-rekening {
+            max-width: 250px;
+            /* Tentukan ukuran tetap */
+
+            white-space: normal;
+            /* Memungkinkan wrap text */
+
+        }
 </style>
 
 <div class="container">
@@ -50,7 +62,7 @@
                     <tr>
                         <td>{{ $index + 1 }}</td>
                         <td>{{ $row->kode_rekening }}</td>
-                        <td>{{ Str::limit($row->nama_rekening, 30) }}</td>
+                        <td class="nama-rekening">{{ $row->nama_rekening}}</td>
                         <td class="text-end">{{ number_format($row->pagu_original, 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format($row->persentase_penyesuaian, 2, ',', '.') }}%</td>
                         <td class="text-end">{{ number_format($row->nilai_penyesuaian, 0, ',', '.') }}</td>
@@ -59,14 +71,15 @@
                 @endforeach
             </tbody>
             <tfoot class="table-dark">
-                <tr>
-                    <th colspan="3" class="text-end">Total:</th>
-                    <th class="text-end">{{ number_format($total_pagu_original, 0, ',', '.') }}</th>
-                    <th>-</th>
-                    <th class="text-end">{{ number_format($total_nilai_penyesuaian, 0, ',', '.') }}</th>
-                    <th class="text-end">{{ number_format($total_pagu_setelah, 0, ',', '.') }}</th>
-                </tr>
-            </tfoot>
+    <tr>
+        <th colspan="3" class="text-end">Total:</th>
+        <th class="text-end">{{ number_format($total_pagu_original, 0, ',', '.') }}</th>
+        <th class="text-end" id="total-persentase">0%</th>
+        <th class="text-end">{{ number_format($total_nilai_penyesuaian, 0, ',', '.') }}</th>
+        <th class="text-end">{{ number_format($total_pagu_setelah, 0, ',', '.') }}</th>
+    </tr>
+</tfoot>
+
         </table>
     </div>
 </div>
@@ -111,6 +124,28 @@
             table.button('.buttons-print').trigger();
         });
     });
+
+
+    function hitungTotalPersentase() {
+    let totalPersentase = 0;
+    let jumlahBaris = 0;
+
+    $('#rekapTable tbody tr').each(function() {
+        let persenText = $(this).find('td:eq(4)').text().replace('%', '').replace(',', '.').trim();
+        let persen = parseFloat(persenText);
+
+        if (!isNaN(persen)) {
+            totalPersentase += persen;
+            jumlahBaris++;
+        }
+    });
+
+    let rataPersentase = jumlahBaris > 0 ? (totalPersentase / jumlahBaris).toFixed(2).replace('.', ',') : "0,00";
+    $('#total-persentase').text(rataPersentase + "%");
+}
+
+// Panggil fungsi saat halaman selesai dimuat
+hitungTotalPersentase();
 </script>
 
 @endsection
