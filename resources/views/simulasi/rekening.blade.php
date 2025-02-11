@@ -22,9 +22,6 @@
 </style>
 
 <div class="container">
-
-   
-
     <div class="table-responsive">
         <table id="rekapTable" class="table table-striped table-bordered table-sm">
             <thead class="table-dark">
@@ -64,10 +61,10 @@
             <tfoot class="table-dark">
                 <tr>
                     <th colspan="3" class="text-end">Total:</th>
-                    <th id="total-pagu-original" class="text-end">{{ number_format($total_pagu_original, 0, ',', '.') }}</th>
+                    <th class="text-end">{{ number_format($total_pagu_original, 0, ',', '.') }}</th>
                     <th>-</th>
-                    <th id="total-nilai-penyesuaian" class="text-end">{{ number_format($total_nilai_penyesuaian, 0, ',', '.') }}</th>
-                    <th id="total-pagu-setelah" class="text-end">{{ number_format($total_pagu_setelah, 0, ',', '.') }}</th>
+                    <th class="text-end">{{ number_format($total_nilai_penyesuaian, 0, ',', '.') }}</th>
+                    <th class="text-end">{{ number_format($total_pagu_setelah, 0, ',', '.') }}</th>
                 </tr>
             </tfoot>
         </table>
@@ -80,7 +77,20 @@
         let table = $('#rekapTable').DataTable({
             dom: 'Bfrtip',
             buttons: [
-                { extend: 'excelHtml5', text: 'Export Excel', className: 'btn btn-success' },
+                {
+                    extend: 'excelHtml5',
+                    text: 'Export Excel',
+                    className: 'btn btn-success',
+                    exportOptions: {
+                        columns: ':visible',
+                        format: {
+                            body: function (data, row, column, node) {
+                                // Hilangkan pemisah ribuan (.) sebelum diekspor
+                                return data.replace(/\./g, '').replace(/,/g, '.');
+                            }
+                        }
+                    }
+                },
                 { extend: 'pdfHtml5', text: 'Export PDF', className: 'btn btn-danger', orientation: 'landscape' },
                 { extend: 'print', text: 'Print', className: 'btn btn-primary' }
             ],
