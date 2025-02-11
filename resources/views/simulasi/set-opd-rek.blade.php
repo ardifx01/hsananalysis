@@ -118,117 +118,119 @@
 <!-- jQuery untuk DataTables & Perhitungan -->
 <script>
     $(document).ready(function() {
-        function formatNumber(value) {
-            return new Intl.NumberFormat('id-ID').format(value);
-        }
+    function formatNumber(value) {
+        return new Intl.NumberFormat('id-ID').format(value);
+    }
 
-        function hitungTotal() {
-            let totalPaguOriginal = 0;
-            let totalNilaiPenyesuaian = 0;
-            let totalPaguSetelah = 0;
+    function removeThousandSeparator(value) {
+        return value.replace(/\./g, ''); // Hapus titik pemisah ribuan
+    }
 
-            $('tbody tr').each(function() {
-                let row = $(this);
-                let paguOriginal = parseFloat(row.find('.pagu-original').data('value')) || 0;
-                let persentase = parseFloat(row.find('.persentase-penyesuaian').val()) || 0;
-                let nilaiPenyesuaian = (paguOriginal * persentase) / 100;
-                let paguSetelah = paguOriginal - nilaiPenyesuaian;
+    function formatPersentase(value) {
+        return value.toString().replace('.', ','); // Pastikan koma sebagai desimal
+    }
 
-                row.find('.nilai-penyesuaian').text(formatNumber(nilaiPenyesuaian));
-                row.find('.pagu-setelah').text(formatNumber(paguSetelah));
+    function hitungTotal() {
+        let totalPaguOriginal = 0;
+        let totalNilaiPenyesuaian = 0;
+        let totalPaguSetelah = 0;
+        let totalPersentase = 0; // Tambahkan total persentase
 
-                totalPaguOriginal += paguOriginal;
-                totalNilaiPenyesuaian += nilaiPenyesuaian;
-                totalPaguSetelah += paguSetelah;
-            });
+        let jumlahBaris = 0; // Untuk menghitung rata-rata persentase
 
-            $('#total-pagu-original').text(formatNumber(totalPaguOriginal));
-            $('#total-nilai-penyesuaian').text(formatNumber(totalNilaiPenyesuaian));
-            $('#total-pagu-setelah').text(formatNumber(totalPaguSetelah));
-        }
+        $('tbody tr').each(function() {
+            let row = $(this);
+            let paguOriginal = parseFloat(removeThousandSeparator(row.find('.pagu-original').text())) || 0;
+            let persentase = parseFloat(row.find('.persentase-penyesuaian').val().replace(',', '.')) || 0;
 
-        $('.persentase-penyesuaian').on('input', function() {
-            hitungTotal();
+            if (!isNaN(persentase) && paguOriginal > 0) {
+                jumlahBaris++;
+            } else {
+                persentase = 0; // Pastikan nilai tidak NaN
+            }
+
+            let nilaiPenyesuaian = (paguOriginal * persentase) / 100;
+            let paguSetelah = paguOriginal - nilaiPenyesuaian;
+
+            row.find('.nilai-penyesuaian').text(formatNumber(nilaiPenyesuaian));
+            row.find('.pagu-setelah').text(formatNumber(paguSetelah));
+
+            totalPaguOriginal += paguOriginal;
+            totalNilaiPenyesuaian += nilaiPenyesuaian;
+            totalPaguSetelah += paguSetelah;
+            totalPersentase += persentase;
         });
 
-        hitungTotal();
+        $('#total-pagu-original').text(formatNumber(totalPaguOriginal));
+        $('#total-nilai-penyesuaian').text(formatNumber(totalNilaiPenyesuaian));
+        $('#total-pagu-setelah').text(formatNumber(totalPaguSetelah));
 
-        /** ✅ Tambahkan DataTables dengan fitur Export */
-        $('#rekapTable').DataTable({
-            dom: 'Bfrtip',
-            buttons: [
-                { extend: 'copy', text: 'Copy' },
-                { extend: 'csv', text: 'CSV' },
-                { 
-            extend: 'excelHtml5', 
-            text: 'Export Excel',
-            exportOptions: {
-                columns: ':visible',
-                format: {
-                    body: function (data, row, column, node) {
-                        // Ambil data dari atribut data-export jika ada
-                        let exportData = $(node).attr('data-export');
-                        if (exportData) {
-                            return exportData; // Pastikan hanya data yang dikirim ke Excel
+        // Hitung rata-rata persentase, hindari NaN jika jumlahBaris = 0
+        let avgPersentase = jumlahBaris > 0 ? formatPersentase((totalPersentase / jumlahBaris).toFixed(2)) : "0,00";
+        $('#total-persentase').text(avgPersentase + "%");
+
+        // Simpan nilai total untuk ekspor
+        $('#rekapTable').attr('data-total-pagu-original', totalPaguOriginal);
+        $('#rekapTable').attr('data-total-nilai-penyesuaian', totalNilaiPenyesuaian);
+        $('#rekapTable').attr('data-total-pagu-setelah', totalPaguSetelah);
+        $('#rekapTable').attr('data-total-persentase', avgPersentase);
+    }
+
+    $('.persentase-penyesuaian').on('input', function() {
+        hitungTotal();
+    });
+
+    hitungTotal();
+
+    /** ✅ Tambahkan DataTables dengan fitur Export */
+    $('#rekapTable').DataTable({
+        dom: 'Bfrtip',
+        buttons: [
+            { extend: 'copy', text: 'Copy' },
+            { extend: 'csv', text: 'CSV' },
+            { 
+                extend: 'excelHtml5', 
+                text: 'Export Excel',
+                footer: true,
+                exportOptions: {
+                    columns: ':visible',
+                    format: {
+                        body: function (data, row, column, node) {
+                            if (column === 1) { return $(node).text().trim(); } // Kode rekening
+                            if (column === 4) { 
+                                let persen = parseFloat(data.replace(',', '.'));
+                                return isNaN(persen) ? "0,00" : formatPersentase(persen.toFixed(2)); 
+                            }
+                            return removeThousandSeparator(data.replace(/<[^>]*>?/gm, ''));
+                        },
+                        footer: function (data, row, column, node) {
+                            let totalPaguOriginal = removeThousandSeparator($('#rekapTable').attr('data-total-pagu-original') || '0');
+                            let totalNilaiPenyesuaian = removeThousandSeparator($('#rekapTable').attr('data-total-nilai-penyesuaian') || '0');
+                            let totalPaguSetelah = removeThousandSeparator($('#rekapTable').attr('data-total-pagu-setelah') || '0');
+                            let totalPersentase = $('#rekapTable').attr('data-total-persentase') || "0,00";
+
+                            if (column === 3) return totalPaguOriginal;
+                            if (column === 4) return totalPersentase + "%";
+                            if (column === 5) return totalNilaiPenyesuaian;
+                            if (column === 6) return totalPaguSetelah;
+
+                            return data;
                         }
-                        // Hapus HTML yang masih tersisa
-                        return data.replace(/<[^>]*>?/gm, '');
                     }
                 }
-            }
-        },
-                { extend: 'pdf', 
-            text: 'PDF', 
-            orientation: 'landscape',
-            customize: function(doc) {
-                // Menghapus format angka yang bisa menyebabkan error dalam PDF
-                doc.content[1].table.body.forEach(function(row) {
-                    row.forEach(function(cell) {
-                        if (!isNaN(cell.text)) {
-                            cell.text = cell.text.replace(/\./g, ''); // Hapus pemisah ribuan
-                        }
-                    });
-                });
-            } },
-                { extend: 'print', text: 'Print' }
-            ],
-            paging: false,
-            searching: true,
-            responsive: true
-        });
-
-        /** ✅ Perbaikan tombol RESET OPD **/
-        $('#reset-nilai').on('click', function() {
-            let kodeOpd = $('#kode_opd').val();
-
-            if (!kodeOpd) {
-                alert('Silakan pilih OPD terlebih dahulu.');
-                return;
-            }
-
-            if (confirm('Apakah Anda yakin ingin mereset nilai penyesuaian untuk OPD ini?')) {
-                $.ajax({
-                    url: "{{ route('simulasi.set-opd-rek.reset') }}",
-                    type: "POST",
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        kode_opd: kodeOpd
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            alert("Nilai penyesuaian berhasil direset.");
-                            location.reload(); // Reload halaman hanya jika berhasil
-                        } else {
-                            alert("Gagal mereset nilai: " + response.message);
-                        }
-                    },
-                    error: function(xhr) {
-                        alert('Terjadi kesalahan saat mereset data.');
-                    }
-                });
-            }
-        });
+            },
+            { extend: 'pdfHtml5', text: 'Export PDF', orientation: 'landscape' },
+            { extend: 'print', text: 'Print' }
+        ],
+        paging: false,
+        searching: true,
+        responsive: true
     });
+
+});
+
+
+
 </script>
 
 @endsection

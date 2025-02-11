@@ -282,7 +282,38 @@ public function rekapPaguPerOpd()
 }
 
 
+public function rekapPerjalananDinas()
+{
+    // Ambil OPD
+    $opds = DB::table('opd')->get();
 
+    // Ambil semua rekening yang mengandung kata "Perjalanan Dinas"
+    $rekeningPerjalanan = DB::table('opd_rekening')
+        ->where('nama_rekening', 'LIKE', '%Perjalanan Dinas%')
+        ->get();
+
+    // Ambil data persentase penyesuaian
+    $penyesuaianOPD = DB::table('opd_rekening_penyesuaian')->get()->keyBy('kode_rekening');
+    $penyesuaianGlobal = DB::table('rekening_penyesuaian')->get()->keyBy('kode_rekening');
+
+    $data = [];
+
+    foreach ($rekeningPerjalanan as $row) {
+        // Cari persentase penyesuaian: OPD dulu, kalau tidak ada cek global
+        $persentase = $penyesuaianOPD[$row->kode_rekening]->persentase_penyesuaian ?? 
+                      $penyesuaianGlobal[$row->kode_rekening]->persentase_penyesuaian ?? 0;
+
+        $data[] = [
+            'nama_skpd' => $opds->where('kode_skpd', $row->kode_opd)->first()->nama_skpd ?? '-',
+            'kode_rekening' => $row->kode_rekening,
+            'nama_rekening' => $row->nama_rekening,
+            'pagu_original' => $row->pagu_original,
+            'persentase_penyesuaian' => $persentase,
+        ];
+    }
+
+    return view('simulasi.rekap_perjalanan_dinas', compact('data'));
+}
 
 
 

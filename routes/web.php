@@ -24,6 +24,8 @@ Route::get('/simulasi/rekening', [SimulasiController::class, 'rekapPerRekeningVi
 Route::get('/simulasi/rekap-pagu-opd', [SimulasiController::class, 'rekapPaguPerOpd'])->name('simulasi.pagu.opd');
 
 
+Route::get('/simulasi/perjalanan-dinas', [SimulasiController::class, 'rekapPerjalananDinas'])->name('simulasi.perjalanan-dinas');
+
 
 
 // Route untuk menampilkan halaman rekap per OPD
