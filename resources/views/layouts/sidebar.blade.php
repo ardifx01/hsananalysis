@@ -305,7 +305,7 @@
                                     </svg>
                                 </i>
                                 <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Test</span>
+                                <span class="item-name">Test 1</span>
                             </a>
                         </li>
                        
