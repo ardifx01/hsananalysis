@@ -7,6 +7,11 @@ use App\Models\RekeningPenyesuaian;
 use Illuminate\Support\Facades\DB;
 use App\Models\OpdRekeningPenyesuaian;
 
+
+//note
+//Nama OPD
+//Pagu Murni | Jumlah Pengurangan | Pagu Setelah Pengurangan
+
 class SimulasiController extends Controller
 {
 
