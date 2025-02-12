@@ -266,37 +266,45 @@ public function rekapPaguPerOpd()
             'da.nama_skpd',
             DB::raw('SUM(da.pagu) as pagu_original'),
 
-            // ✅ Perbaikan: Gunakan rata-rata berbobot berdasarkan total pagu di OPD
+            // ✅ Langkah 1: Hitung nilai pengurangan langsung berdasarkan persentase di opd_rekening_penyesuaian atau rekening_penyesuaian
+            DB::raw('
+                SUM(da.pagu * COALESCE(
+                    (SELECT persentase_penyesuaian / 100 
+                     FROM opd_rekening_penyesuaian 
+                     WHERE opd_rekening_penyesuaian.kode_rekening = da.kode_rekening 
+                     AND opd_rekening_penyesuaian.kode_opd = da.kode_skpd 
+                     LIMIT 1),
+                    rp.persentase_penyesuaian / 100,
+                    0
+                )) as nilai_penyesuaian
+            '),
+
+            // ✅ Langkah 2: Hitung ulang persentase berdasarkan total nilai pengurangan
             DB::raw('
                 ROUND(
-                    COALESCE(
-                        SUM(da.pagu * opd_rp.persentase_penyesuaian) / NULLIF(SUM(da.pagu), 0), 
-                        SUM(da.pagu * rp.persentase_penyesuaian) / NULLIF(SUM(da.pagu), 0), 
+                    (SUM(da.pagu * COALESCE(
+                        (SELECT persentase_penyesuaian / 100 
+                         FROM opd_rekening_penyesuaian 
+                         WHERE opd_rekening_penyesuaian.kode_rekening = da.kode_rekening 
+                         AND opd_rekening_penyesuaian.kode_opd = da.kode_skpd 
+                         LIMIT 1),
+                        rp.persentase_penyesuaian / 100,
                         0
-                    ), 2
+                    )) / SUM(da.pagu)) * 100, 2
                 ) as persentase_penyesuaian
             '),
 
-            // ✅ Jumlah penyesuaian (dihitung ulang sesuai persentase terbaru)
+            // ✅ Hitung pagu setelah penyesuaian
             DB::raw('
-                ROUND(
-                    SUM(da.pagu) * (COALESCE(
-                        SUM(da.pagu * opd_rp.persentase_penyesuaian) / NULLIF(SUM(da.pagu), 0), 
-                        SUM(da.pagu * rp.persentase_penyesuaian) / NULLIF(SUM(da.pagu), 0), 
-                        0
-                    ) / 100), 0
-                ) as nilai_penyesuaian
-            '),
-
-            // ✅ Pagu setelah penyesuaian (dihitung ulang dengan cara yang sama)
-            DB::raw('
-                ROUND(
-                    SUM(da.pagu) - (SUM(da.pagu) * (COALESCE(
-                        SUM(da.pagu * opd_rp.persentase_penyesuaian) / NULLIF(SUM(da.pagu), 0), 
-                        SUM(da.pagu * rp.persentase_penyesuaian) / NULLIF(SUM(da.pagu), 0), 
-                        0
-                    ) / 100)), 0
-                ) as pagu_setelah_penyesuaian
+                SUM(da.pagu) - SUM(da.pagu * COALESCE(
+                    (SELECT persentase_penyesuaian / 100 
+                     FROM opd_rekening_penyesuaian 
+                     WHERE opd_rekening_penyesuaian.kode_rekening = da.kode_rekening 
+                     AND opd_rekening_penyesuaian.kode_opd = da.kode_skpd 
+                     LIMIT 1),
+                    rp.persentase_penyesuaian / 100,
+                    0
+                )) as pagu_setelah_penyesuaian
             ')
         )
         ->where('da.tipe_data', 'original')
@@ -306,6 +314,7 @@ public function rekapPaguPerOpd()
 
     return view('simulasi.opd', compact('data'));
 }
+
 
 
 public function rekapPerjalananDinas()
