@@ -312,77 +312,59 @@
                                 namaOpd : "Rekapitulasi OPD";
                         },
                         customize: function(doc) {
-                            let tableContent = doc.content.find(item => item.table);
-                            if (!tableContent) return; // Jika tidak ada tabel, jangan lanjutkan
+    let tableContent = doc.content.find(item => item.table);
+    if (!tableContent) return; // Jika tidak ada tabel, jangan lanjutkan
 
-                            // 🔥 Ubah ukuran font agar lebih proporsional
-                            doc.defaultStyle.fontSize = 10;
-                            doc.styles.tableHeader.fontSize = 12;
-                            doc.styles.title.fontSize = 14;
+    // 🔥 Ubah ukuran font agar lebih proporsional
+    doc.defaultStyle.fontSize = 10;
+    doc.styles.tableHeader.fontSize = 12;
+    doc.styles.title.fontSize = 14;
 
-                            // 🔥 Hapus kolom persentase dari PDF
-                            tableContent.table.body.forEach(function(row, index) {
-                                if (index === 0) {
-                                    row[3].text =
-                                    "Pagu Murni"; // 🔄 Sebelumnya "Pagu Original"
-                                    row[4].text =
-                                    "Jumlah Pengurangan"; // 🔄 Sebelumnya "Jumlah Penyesuaian"
-                                    row[5].text =
-                                    "Pagu Setelah Pengurangan"; // 🔄 Sebelumnya "Pagu Setelah Penyesuaian"
-                                }
-                                row.splice(4,
-                                1); // 🔥 Hapus kolom ke-4 (Persentase Penyesuaian)
+    // 🔥 Ganti header tabel agar sesuai dengan permintaan
+    tableContent.table.body[0] = [
+        { text: "No", bold: true, alignment: "center" },
+        { text: "Kode Rekening", bold: true, alignment: "center" },
+        { text: "Nama Rekening", bold: true, alignment: "center" },
+        { text: "Pagu Murni", bold: true, alignment: "right" },  // 🔄 Sebelumnya: "Pagu Original"
+        { text: "Pagu Pengurangan", bold: true, alignment: "right" }, // 🔄 Sebelumnya: "Jumlah Penyesuaian"
+        { text: "Pagu Setelah Pengurangan", bold: true, alignment: "right" } // 🔄 Sebelumnya: "Pagu Setelah Penyesuaian"
+    ];
 
-                                // 🔥 Pastikan semua angka dalam kolom 3, 4, dan 5 berformat rata kanan
-                                if (index !== 0) {
-                                    row[3].alignment = "right"; // Pagu Murni
-                                    row[4].alignment = "right"; // Jumlah Pengurangan
-                                    row[5].alignment = "right"; // Pagu Setelah Pengurangan
-                                }
-                            });
+    // 🔥 Hapus kolom persentase dari semua baris
+    tableContent.table.body.forEach(function(row, index) {
+        if (index > 0) {
+            row.splice(4, 1); // 🔥 Hapus kolom ke-4 (Persentase Penyesuaian)
 
-                            // 🔥 Ambil total dari elemen footer di tabel HTML
-                            let totalPaguMurni = $("#total-pagu-original").text().trim();
-                            let totalJumlahPengurangan = $("#total-nilai-penyesuaian").text()
-                        .trim();
-                            let totalPaguSetelah = $("#total-pagu-setelah").text().trim();
+            // 🔥 Pastikan semua angka dalam kolom 3, 4, dan 5 berformat rata kanan
+            row[3].alignment = "right"; // Pagu Murni
+            row[4].alignment = "right"; // Pagu Pengurangan
+            row[5].alignment = "right"; // Pagu Setelah Pengurangan
+        }
+    });
 
-                            // 🔥 Tambahkan baris total ke dalam PDF
-                            tableContent.table.body.push([{
-                                    text: "TOTAL",
-                                    bold: true,
-                                    alignment: "right",
-                                    colSpan: 3
-                                },
-                                {},
-                                {},
-                                {
-                                    text: totalPaguMurni,
-                                    bold: true,
-                                    alignment: "right"
-                                },
-                                {
-                                    text: totalJumlahPengurangan,
-                                    bold: true,
-                                    alignment: "right"
-                                },
-                                {
-                                    text: totalPaguSetelah,
-                                    bold: true,
-                                    alignment: "right"
-                                }
-                            ]);
+    // 🔥 Ambil total dari elemen footer di tabel HTML
+    let totalPaguMurni = $("#total-pagu-original").text().trim();
+    let totalPaguPengurangan = $("#total-nilai-penyesuaian").text().trim();
+    let totalPaguSetelah = $("#total-pagu-setelah").text().trim();
 
-                            // 🔥 Sesuaikan tata letak tabel di PDF agar lebih enak dibaca
-                            let objLayout = {};
-                            objLayout['hLineWidth'] = function(i) {
-                                return 0.8;
-                            };
-                            objLayout['vLineWidth'] = function(i) {
-                                return 0.8;
-                            };
-                            tableContent.layout = objLayout;
-                        }
+    // 🔥 Tambahkan baris total ke dalam PDF
+    tableContent.table.body.push([
+        { text: "TOTAL", bold: true, alignment: "right", colSpan: 3 },
+        {},
+        {},
+        { text: totalPaguMurni, bold: true, alignment: "right" },
+        { text: totalPaguPengurangan, bold: true, alignment: "right" },
+        { text: totalPaguSetelah, bold: true, alignment: "right" }
+    ]);
+
+    // 🔥 Sesuaikan tata letak tabel di PDF agar lebih enak dibaca
+    let objLayout = {};
+    objLayout['hLineWidth'] = function(i) { return 0.8; };
+    objLayout['vLineWidth'] = function(i) { return 0.8; };
+    tableContent.layout = objLayout;
+}
+
+
 
                     },
                     {
