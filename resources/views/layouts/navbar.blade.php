@@ -29,7 +29,7 @@
                 
                 
                 
-                <h4 class="logo-title">hsedusystem</h4>
+                <h4 class="logo-title">APBD Analysis</h4>
             </a>
             <div class="sidebar-toggle" data-toggle="sidebar" data-active="true">
                 <i class="icon">

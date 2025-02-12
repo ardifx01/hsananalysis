@@ -56,7 +56,7 @@
                 @foreach($data as $index => $row)
                     @php
                         $total_pagu_original += $row->pagu_original;
-                        $total_nilai_penyesuaian += $row->nilai_penyesuaian;
+                        $total_nilai_penyesuaian += $row->nilai_penyesuaian_total;
                         $total_pagu_setelah += $row->pagu_setelah_penyesuaian;
                     @endphp
                     <tr>
@@ -64,8 +64,8 @@
                         <td>{{ $row->kode_rekening }}</td>
                         <td class="nama-rekening">{{ $row->nama_rekening}}</td>
                         <td class="text-end">{{ number_format($row->pagu_original, 0, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($row->persentase_penyesuaian, 2, ',', '.') }}%</td>
-                        <td class="text-end">{{ number_format($row->nilai_penyesuaian, 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($row->persentase_akhir, 2, ',', '.') }}%</td>
+                        <td class="text-end">{{ number_format($row->nilai_penyesuaian_total, 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format($row->pagu_setelah_penyesuaian, 0, ',', '.') }}</td>
                     </tr>
                 @endforeach

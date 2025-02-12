@@ -202,7 +202,7 @@ public function exportExcel(Request $request)
 
 
 
-    public function rekapPerRekeningView()
+public function rekapPerRekeningView()
 {
     $data = DB::table('data_anggarans as da')
         ->leftJoin('rekening_penyesuaian as rp', 'da.kode_rekening', '=', 'rp.kode_rekening')
@@ -214,17 +214,43 @@ public function exportExcel(Request $request)
             'da.kode_rekening',
             'da.nama_rekening',
             DB::raw('SUM(da.pagu) as pagu_original'),
-            DB::raw('ROUND(COALESCE(SUM(da.pagu * opd_rp.persentase_penyesuaian) / NULLIF(SUM(da.pagu), 0), rp.persentase_penyesuaian, 0), 2) as persentase_penyesuaian'),
-            DB::raw('ROUND(SUM(da.pagu) * (COALESCE(SUM(da.pagu * opd_rp.persentase_penyesuaian) / NULLIF(SUM(da.pagu), 0), rp.persentase_penyesuaian, 0) / 100), 0) as nilai_penyesuaian'),
-            DB::raw('ROUND(SUM(da.pagu) - (SUM(da.pagu) * (COALESCE(SUM(da.pagu * opd_rp.persentase_penyesuaian) / NULLIF(SUM(da.pagu), 0), rp.persentase_penyesuaian, 0) / 100)), 0) as pagu_setelah_penyesuaian')
+            
+            // Hitung nilai penyesuaian total dari semua OPD yang memiliki data di opd_rekening_penyesuaian
+            DB::raw('
+                ROUND(
+                    SUM(da.pagu * COALESCE(opd_rp.persentase_penyesuaian, rp.persentase_penyesuaian, 0) / 100),
+                    0
+                ) as nilai_penyesuaian_total
+            '),
+
+            // Hitung pagu setelah penyesuaian
+            DB::raw('
+                ROUND(
+                    SUM(da.pagu) - SUM(da.pagu * COALESCE(opd_rp.persentase_penyesuaian, rp.persentase_penyesuaian, 0) / 100),
+                    0
+                ) as pagu_setelah_penyesuaian
+            '),
+
+            // Hitung persentase akhir setelah nilai penyesuaian diperoleh
+            DB::raw('
+                ROUND(
+                    (SUM(da.pagu * COALESCE(opd_rp.persentase_penyesuaian, rp.persentase_penyesuaian, 0) / 100) / SUM(da.pagu)) * 100,
+                    2
+                ) as persentase_akhir
+            ')
         )
-        ->where('da.tipe_data', 'original') // 🔥 Hanya data pagu original
-        ->groupBy('da.kode_rekening', 'da.nama_rekening', 'rp.persentase_penyesuaian')
+        ->where('da.tipe_data', 'original') // Hanya data pagu original
+        ->groupBy('da.kode_rekening', 'da.nama_rekening')
         ->orderBy('da.kode_rekening')
         ->get();
 
     return view('simulasi.rekening', compact('data'));
 }
+
+
+
+
+
 
 
 public function rekapPaguPerOpd()
