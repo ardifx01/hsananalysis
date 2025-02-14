@@ -51,6 +51,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/compare/rek', [DataAnggaranController::class, 'compareDataRek'])->name('compare-rek');
     Route::get('/compare-opd', [DataAnggaranController::class, 'comparePerOpd'])->name('compare-opd');
 
+    Route::get('/compare/sub-kegiatan', [DataAnggaranController::class, 'comparePerSubKegiatan'])->name('compare.sub-kegiatan');
+
+
     // TOOLS & MANAJEMEN DATA
     Route::get('/tools', [DataAnggaranController::class, 'importPage'])->name('import.page');
     Route::delete('/hapus-original', [DataAnggaranController::class, 'hapusOriginal'])->name('hapus.original');

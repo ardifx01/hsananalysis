@@ -102,10 +102,10 @@
                                 <th>No</th>
                                 <th>Kode Rekening</th>
                                 <th>Nama Rekening</th>
-                                <th>Pagu Original</th>
+                                <th>Pagu Murni</th>
                                 <th>Persentase Penyesuaian</th>
-                                <th>Jumlah Penyesuaian</th>
-                                <th>Pagu Setelah Penyesuaian</th>
+                                <th>Pagu Pengurangan</th>
+                                <th>Pagu Setelah Pengurangan</th>
                             </tr>
                         </thead>
                         <tbody>

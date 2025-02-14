@@ -30,10 +30,10 @@
                     <th>No</th>
                     <th>Kode OPD</th>
                     <th>Nama OPD</th>
-                    <th>Pagu Original</th>
-                    <th>Persentase Penyesuaian</th>
-                    <th>Nilai Penyesuaian</th>
-                    <th>Pagu Setelah Penyesuaian</th>
+                    <th>Pagu Murni</th>
+                    <th>Persentase Pengurangan</th>
+                    <th>Pagu Pengurangan</th>
+                    <th>Pagu Setelah Pengurangan</th>
                 </tr>
             </thead>
             <tbody>
@@ -62,7 +62,7 @@
             </tbody>
             <tfoot class="table-dark">
                 <tr>
-                    <th colspan="3" class="text-end">Total:</th>
+                    <th colspan="3" class="text-end"> </th>
                     <th class="text-end">{{ number_format($totalPaguOriginal, 0, ',', '.') }}</th>
                     <th class="text-end">
                         {{ number_format(($totalPaguOriginal > 0 ? ($totalNilaiPenyesuaian / $totalPaguOriginal * 100) : 0), 2, ',', '.') }}%
@@ -78,20 +78,71 @@
 <!-- jQuery untuk DataTables & Export -->
 <script>
     $(document).ready(function() {
-        $('#rekapTable').DataTable({
+        var table = $('#rekapTable').DataTable({
             dom: 'Bfrtip',
             buttons: [
                 { extend: 'copy', text: 'Copy', className: 'btn btn-secondary' },
                 { extend: 'csv', text: 'CSV', className: 'btn btn-info' },
-                { extend: 'excel', text: 'Excel', className: 'btn btn-success' },
-                { extend: 'pdf', text: 'PDF', className: 'btn btn-danger', orientation: 'landscape' },
-                { extend: 'print', text: 'Print', className: 'btn btn-primary' }
+                { extend: 'excelHtml5', text: '📊 Download Excel', className: 'btn btn-success', footer: true,
+                    exportOptions: {
+                        columns: ':visible',
+                        modifier: { page: 'all' },
+                        format: {
+                            body: function(data, row, column, node) {
+                                return column === 0 ? row + 1 : data.replace(/\./g, '').replace(',', '.');
+                            },
+                            footer: function(data, row, column, node) {
+                                return data.replace(/\./g, '').replace(',', '.');
+                            }
+                        }
+                    }
+                },
+                { extend: 'pdfHtml5', 
+                    text: '📄 Download PDF', 
+                    className: 'btn btn-danger', 
+                    orientation: 'landscape', 
+                    pageSize: 'A4', 
+                    footer: true,
+                    exportOptions: { columns: ':visible', modifier: { page: 'all' } },
+                    customize: function(doc) {
+                        var totalPaguOriginal = $('#totalPaguOriginal').text();
+                        var totalPersentase = $('#totalPersentase').text();
+                        var totalNilaiPenyesuaian = $('#totalNilaiPenyesuaian').text();
+                        var totalPaguSetelah = $('#totalPaguSetelah').text();
+
+                    }
+                    
+                },
+                { extend: 'print', text: '🖨️ Print', className: 'btn btn-primary', footer: true }
             ],
             paging: false,
             searching: true,
-            responsive: true
+            responsive: true,
+            footerCallback: function(row, data, start, end, display) {
+                var api = this.api();
+                var totalPaguOriginal = 0, totalNilaiPenyesuaian = 0, totalPaguSetelah = 0;
+
+                api.rows({ search: 'applied' }).every(function() {
+                    var row = $(this.node());
+                    var paguOriginal = parseFloat(row.find('.pagu-original').text().replace(/\./g, '').replace(',', '.')) || 0;
+                    var nilaiPenyesuaian = parseFloat(row.find('.nilai-penyesuaian').text().replace(/\./g, '').replace(',', '.')) || 0;
+                    var paguSetelah = parseFloat(row.find('.pagu-setelah').text().replace(/\./g, '').replace(',', '.')) || 0;
+
+                    totalPaguOriginal += paguOriginal;
+                    totalNilaiPenyesuaian += nilaiPenyesuaian;
+                    totalPaguSetelah += paguSetelah;
+                });
+
+                var totalPersentase = totalPaguOriginal > 0 ? (totalNilaiPenyesuaian / totalPaguOriginal * 100).toFixed(2) : 0;
+
+                $('#totalPaguOriginal').text(totalPaguOriginal.toLocaleString('id-ID'));
+                $('#totalPersentase').text(totalPersentase.toLocaleString('id-ID') + '%');
+                $('#totalNilaiPenyesuaian').text(totalNilaiPenyesuaian.toLocaleString('id-ID'));
+                $('#totalPaguSetelah').text(totalPaguSetelah.toLocaleString('id-ID'));
+            }
         });
     });
 </script>
+
 
 @endsection

@@ -151,4 +151,48 @@ public function hapusOriginal()
         return redirect()->back()->with('error', 'Tidak ada data original yang ditemukan.');
     }
 }
+
+public function comparePerSubKegiatan(Request $request)
+{
+    // Ambil daftar OPD untuk dropdown, diurutkan berdasarkan kode OPD
+    $opds = DataAnggaran::select('kode_skpd', 'nama_skpd')
+        ->distinct()
+        ->orderBy('kode_skpd') // Urutkan berdasarkan kode OPD
+        ->get();
+
+    // Ambil filter OPD dari request
+    $kodeOpd = $request->input('kode_opd');
+
+    // Query data berdasarkan kode sub kegiatan
+    $query = DataAnggaran::select(
+        'kode_sub_kegiatan',
+        'nama_sub_kegiatan',
+        'kode_skpd as kode_opd',
+        'nama_skpd as nama_opd',
+        DB::raw('SUM(CASE WHEN tipe_data = "original" THEN pagu ELSE 0 END) as pagu_original'),
+        DB::raw('SUM(CASE WHEN tipe_data = "revisi" THEN pagu ELSE 0 END) as pagu_revisi')
+    )
+    ->groupBy('kode_sub_kegiatan', 'nama_sub_kegiatan', 'kode_skpd', 'nama_skpd')
+    ->orderBy('kode_sub_kegiatan'); // Urutkan hasil berdasarkan kode sub kegiatan
+
+    // Jika ada filter OPD, tambahkan kondisi
+    if (!empty($kodeOpd)) {
+        $query->where('kode_skpd', $kodeOpd);
+    }
+
+    $rekap = $query->get();
+
+    // Hitung selisih dan persentase perubahan
+    foreach ($rekap as $item) {
+        $item->selisih = $item->pagu_revisi - $item->pagu_original;
+        $item->persentase = $item->pagu_original > 0 ? ($item->selisih / $item->pagu_original) * 100 : 0;
+    }
+
+    return view('data.compare-sub-kegiatan', compact('rekap', 'opds'));
+}
+
+
+
+
+
 }

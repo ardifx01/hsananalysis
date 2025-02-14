@@ -48,10 +48,10 @@
                         <th>No</th>
                         <th>Kode Rekening</th>
                         <th>Nama Rekening</th>
-                        <th>Pagu Original</th>
-                        <th>Persentase Penyesuaian</th>
-                        <th>Nilai Penyesuaian</th>
-                        <th>Pagu Setelah Penyesuaian</th>
+                        <th>Pagu Murni</th>
+                        <th>Persentase Pengurangan</th>
+                        <th>Pagu Pengurangan</th>
+                        <th>Pagu Setelah Pengurangan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -193,12 +193,12 @@
                                     alignment: "right"
                                 }, // 🔄 Sebelumnya: "Pagu Original"
                                 {
-                                    text: "Persentase Penyesuaian",
+                                    text: "Persentase Pengurangan",
                                     bold: true,
                                     alignment: "right"
                                 },
                                 {
-                                    text: "Pagu Penyesuaian",
+                                    text: "Pagu Pengurangan",
                                     bold: true,
                                     alignment: "right"
                                 }, // 🔄 Sebelumnya: "Nilai Penyesuaian"
