@@ -4,8 +4,13 @@
 @section('page-title', 'Rekap Perjalanan Dinas')
 
 @section('content')
+<!-- ✅ Tambahkan DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
 
 <style>
+
+
   
     table { width: 100%; border-collapse: collapse; background-color: #fff; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); border-radius: 5px; overflow: hidden; }
     th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #ddd; font-size: 12px; white-space: normal; word-wrap: break-word; }
@@ -47,11 +52,7 @@
     .save-all-button { margin-bottom: 10px; }
 
     /* Sticky Footer */
-tfoot {
-  position: sticky;
-  bottom: 0;
-  border-top: 2px solid #ccc;
-}
+
 /* ✅ Kotak Floating untuk Total */
 #floatingTotalBox {
     position: fixed;
@@ -83,6 +84,9 @@ tfoot {
 
     <!-- 🔥 Tombol Simpan Semua -->
     <button id="saveAllButton" class="btn btn-primary save-all-button">Simpan Semua</button>
+    <button onclick="exportToExcel()" class="btn btn-success">Export ke Excel</button>
+<button onclick="exportToPDF()" class="btn btn-danger">Export ke PDF</button>
+
 
     <table id="rekapTable" class="table table-bordered">
         <thead class="table-dark">
@@ -184,6 +188,11 @@ tfoot {
 </div>
 
 <!-- ✅ Perbaikan JavaScript -->
+
+<!-- ✅ Tambahkan DataTables & Export Buttons -->
+
+
+
 <script>
    $(document).ready(function () {
     function updateValues() {
@@ -259,19 +268,22 @@ tfoot {
         $("#totalPaguSetelahFloating").text(totalKeseluruhanSetelah.toLocaleString("id-ID"));
        
     }
- updateValues();
+
     // 🔥 Event listener untuk slider dan input angka
     $(".slider, .slider-value").on("input", function () {
         let newValue = $(this).val();
         $(this).closest(".slider-container").find(".slider, .slider-value").val(newValue);
         updateValues();
+        
     });
 
 
     // 🔥 Event Listener untuk Tombol Simpan Semua
     $("#saveAllButton").on("click", function () {
-        let changedValues = [];
 
+
+
+        let changedValues = [];
         $(".slider").each(function () {
             let kodeOpd = $(this).data("kode-opd");
             let kodeRekening = $(this).data("kode-rekening");
@@ -309,8 +321,94 @@ tfoot {
         }
     });
 
-    // 🔥 Jalankan update saat halaman pertama kali dimuat
+   function exportToExcel() {
+        let table = document.getElementById("rekapTable");
+        let wb = XLSX.utils.table_to_book(table, { sheet: "Rekap Dinas" });
+
+        // 🔥 Tambahkan Total Keseluruhan di Footer
+        let ws = wb.Sheets["Rekap Dinas"];
+        let lastRow = Object.keys(ws).length + 2;
+
+        XLSX.utils.sheet_add_aoa(ws, [
+            ["Total Keseluruhan", "", "", document.getElementById("totalPaguMurni").innerText, "", 
+            document.getElementById("totalPersentasePengurangan").innerText, "", 
+            document.getElementById("totalPaguPengurangan").innerText, "", 
+            document.getElementById("totalPaguSetelah").innerText]
+        ], { origin: lastRow });
+
+        XLSX.writeFile(wb, "rekap_perjalanan_dinas.xlsx");
+    }
+
+   function exportToPDF() {
+    const { jsPDF } = window.jspdf;
+    let doc = new jsPDF("l", "mm", "a4"); // 📄 Landscape Mode, A4 Size
+    doc.text("Rekap Perjalanan Dinas", 14, 10);
+
+    // 🔥 Ambil tabel tanpa footer
+    let table = document.getElementById("rekapTable");
+    let thead = table.getElementsByTagName("thead")[0].innerHTML;
+    let tbody = table.getElementsByTagName("tbody")[0].innerHTML;
+
+    // 🔥 Buat tabel sementara tanpa footer
+    let tempTable = document.createElement("table");
+    tempTable.innerHTML = `<thead>${thead}</thead><tbody>${tbody}</tbody>`;
+
+    // 🔥 AutoTable untuk isi tabel (tanpa footer)
+    let finalY = doc.autoTable({
+        html: tempTable,
+        theme: "grid",
+        startY: 20,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontSize: 9 },
+        columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 40 }, 2: { cellWidth: 40 } }
+    }).lastAutoTable.finalY;
+
+    // 🔥 Ambil jumlah halaman
+    let totalPages = doc.getNumberOfPages();
+    doc.setPage(totalPages); // Pindah ke halaman terakhir
+    finalY = doc.internal.pageSize.height - 40; // Letakkan footer di bagian bawah
+
+    // 🔥 Ambil data dari tfoot
+    let totalPaguMurni = document.getElementById("totalPaguMurni").innerText;
+    let totalPersentasePengurangan = document.getElementById("totalPersentasePengurangan").innerText;
+    let totalPaguPengurangan = document.getElementById("totalPaguPengurangan").innerText;
+    let totalPaguSetelah = document.getElementById("totalPaguSetelah").innerText;
+
+    // 🔥 AutoTable untuk footer hanya di halaman terakhir
+    // 🔥 AutoTable untuk footer hanya di halaman terakhir, dengan angka ditebalkan
+    doc.autoTable({
+        startY: finalY,
+        body: [
+            ["Pagu Murni", { content: totalPaguMurni, styles: { fontStyle: "bold" } }, 
+             "Persentase", { content: totalPersentasePengurangan, styles: { fontStyle: "bold" } }, 
+             "Pagu Pengurangan", { content: totalPaguPengurangan, styles: { fontStyle: "bold" } }, 
+             "Pagu Setelah Pengurangan", { content: totalPaguSetelah, styles: { fontStyle: "bold" } }]
+        ],
+        styles: { fontSize: 10 },
+        columnStyles: { 1: { cellWidth: 30 }, 3: { cellWidth: 30 }, 5: { cellWidth: 30 }, 7: { cellWidth: 30 } }
+    });
+
+    doc.save("rekap_perjalanan_dinas.pdf");
+}
+
+
+
+
+
+
+
+
+    // Pastikan fungsi tersedia di global scope
+    window.exportToExcel = exportToExcel;
+    window.exportToPDF = exportToPDF;
+ 
+
+
+     // 🔥 Jalankan update saat halaman pertama kali dimuat
     updateValues();
+
+    
+
 });
 
 
