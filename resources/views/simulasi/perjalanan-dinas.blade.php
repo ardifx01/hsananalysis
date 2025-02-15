@@ -384,7 +384,7 @@
              "Pagu Pengurangan", { content: totalPaguPengurangan, styles: { fontStyle: "bold" } }, 
              "Pagu Setelah Pengurangan", { content: totalPaguSetelah, styles: { fontStyle: "bold" } }]
         ],
-        styles: { fontSize: 10 },
+        styles: { fontSize: 8 },
         columnStyles: { 1: { cellWidth: 30 }, 3: { cellWidth: 30 }, 5: { cellWidth: 30 }, 7: { cellWidth: 30 } }
     });
 
