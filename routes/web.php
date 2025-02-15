@@ -18,6 +18,10 @@ Route::middleware('auth')->group(function () {
     // SETINGAN AWAL PERSENTASE SIMULASI PENYESUAIAN
     Route::get('simulasi/set-rek', [SimulasiController::class, 'set_rek'])->name('set-rek');
     Route::post('simulasi/set-rek/update', [SimulasiController::class, 'updatePersentase'])->name('set-rek.update');
+    Route::post('/simulasi/update-persentase', [SimulasiController::class, 'updatePersentasePd'])->name('simulasi.update-persentase');
+    Route::post('/simulasi/update-massal', [SimulasiController::class, 'updateMassal'])->name('simulasi.update-massal');
+
+
 
     // TAMPILAN SIMULASI
     Route::get('/simulasi/set-opd-rek', [SimulasiController::class, 'setOpdRekView'])->name('simulasi.set-opd-rek');
@@ -26,7 +30,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/simulasi/rekening', [SimulasiController::class, 'rekapPerRekeningView'])->name('simulasi.rekening');
     Route::get('/simulasi/rekap-pagu-opd', [SimulasiController::class, 'rekapPaguPerOpd'])->name('simulasi.pagu.opd');
-    Route::get('/simulasi/perjalanan-dinas', [SimulasiController::class, 'rekapPerjalananDinas'])->name('simulasi.perjalanan-dinas');
+    Route::get('/simulasi/perjalanan-dinas', [SimulasiController::class, 'perjalananDinasView'])->name('simulasi.perjalanan-dinas');
 
     // EXPORT DATA REKAP
     Route::get('/rekap-peropd/export/excel', [RekapPerOpdController::class, 'exportExcel'])->name('rekap.peropd.export.excel');

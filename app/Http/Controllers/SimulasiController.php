@@ -51,6 +51,8 @@ class SimulasiController extends Controller
     return redirect()->route('set-rek')->with('success', 'Persentase penyesuaian berhasil diperbarui.');
     }
 
+    
+
 
 //TAMPILAN PERSENTASE SIMULASI PENYESUAIAN PER OPD PER REK
 public function setOpdRekView(Request $request)
@@ -324,38 +326,128 @@ public function rekapPaguPerOpd()
 
 public function rekapPerjalananDinas()
 {
-    // Ambil OPD
-    $opds = DB::table('opd')->get();
-
-    // Ambil semua rekening yang mengandung kata "Perjalanan Dinas"
-    $rekeningPerjalanan = DB::table('opd_rekening')
-        ->where('nama_rekening', 'LIKE', '%Perjalanan Dinas%')
+    // Ambil data rekening perjalanan dinas dari semua OPD
+    $rekap = DB::table('data_anggarans')
+        ->leftJoin('opd_rekening_penyesuaian', function ($join) {
+            $join->on('data_anggarans.kode_rekening', '=', 'opd_rekening_penyesuaian.kode_rekening')
+                 ->on('data_anggarans.kode_skpd', '=', 'opd_rekening_penyesuaian.kode_opd');
+        })
+        ->where('data_anggarans.nama_rekening', 'LIKE', '%Perjalanan Dinas%') // Hanya ambil rekening perjalanan dinas
+        ->select(
+            'data_anggarans.kode_skpd',
+            'data_anggarans.nama_skpd AS nama_opd', // Ganti alias untuk konsistensi di Blade
+            'data_anggarans.kode_rekening',
+            'data_anggarans.nama_rekening',
+            DB::raw('SUM(CASE WHEN tipe_data = "original" THEN pagu ELSE 0 END) as pagu_original'),
+            DB::raw('COALESCE(opd_rekening_penyesuaian.persentase_penyesuaian, 0) as persentase_pengurangan')
+        )
+        ->groupBy('data_anggarans.kode_skpd', 'data_anggarans.nama_skpd', 'data_anggarans.kode_rekening', 'data_anggarans.nama_rekening', 'opd_rekening_penyesuaian.persentase_penyesuaian')
+        ->orderBy('data_anggarans.kode_skpd')
         ->get();
 
-    // Ambil data persentase penyesuaian
-    $penyesuaianOPD = DB::table('opd_rekening_penyesuaian')->get()->keyBy('kode_rekening');
-    $penyesuaianGlobal = DB::table('rekening_penyesuaian')->get()->keyBy('kode_rekening');
-
-    $data = [];
-
-    foreach ($rekeningPerjalanan as $row) {
-        // Cari persentase penyesuaian: OPD dulu, kalau tidak ada cek global
-        $persentase = $penyesuaianOPD[$row->kode_rekening]->persentase_penyesuaian ?? 
-                      $penyesuaianGlobal[$row->kode_rekening]->persentase_penyesuaian ?? 0;
-
-        $data[] = [
-            'nama_skpd' => $opds->where('kode_skpd', $row->kode_opd)->first()->nama_skpd ?? '-',
-            'kode_rekening' => $row->kode_rekening,
-            'nama_rekening' => $row->nama_rekening,
-            'pagu_original' => $row->pagu_original,
-            'persentase_penyesuaian' => $persentase,
-        ];
+    // Hitung nilai pengurangan dan pagu setelah pengurangan
+    foreach ($rekap as $row) {
+        $row->pagu_pengurangan = ($row->pagu_original * $row->persentase_pengurangan) / 100;
+        $row->pagu_setelah_pengurangan = $row->pagu_original - $row->pagu_pengurangan;
     }
 
-    return view('simulasi.rekap_perjalanan_dinas', compact('data'));
+    return view('simulasi.rekap-perjalanan-dinas', compact('rekap'));
 }
 
 
+public function perjalananDinasView()
+{
+    $data = DB::table('data_anggarans')
+        ->leftJoin('opd_rekening_penyesuaian', function ($join) {
+            $join->on('data_anggarans.kode_rekening', '=', 'opd_rekening_penyesuaian.kode_rekening')
+                 ->on('data_anggarans.kode_skpd', '=', 'opd_rekening_penyesuaian.kode_opd');
+        })
+        ->leftJoin('rekening_penyesuaian', 'data_anggarans.kode_rekening', '=', 'rekening_penyesuaian.kode_rekening')
+        ->select(
+            'data_anggarans.kode_skpd',
+            'data_anggarans.nama_skpd AS nama_opd',
+            'data_anggarans.kode_rekening',
+            'data_anggarans.nama_rekening',
+            DB::raw('SUM(CASE WHEN tipe_data = "original" THEN pagu ELSE 0 END) as pagu_original'),
+            DB::raw('COALESCE(opd_rekening_penyesuaian.persentase_penyesuaian, rekening_penyesuaian.persentase_penyesuaian, 0) as persentase_penyesuaian')
+        )
+        ->where('data_anggarans.nama_rekening', 'LIKE', '%Perjalanan Dinas%')
+        ->groupBy('data_anggarans.kode_skpd', 'data_anggarans.nama_skpd', 'data_anggarans.kode_rekening', 'data_anggarans.nama_rekening', 'opd_rekening_penyesuaian.persentase_penyesuaian', 'rekening_penyesuaian.persentase_penyesuaian')
+        ->orderBy('data_anggarans.kode_skpd', 'asc')
+        ->get();
+
+    // Hitung total perjalanan dinas per OPD, pagu pengurangan per OPD, dan pagu setelah pengurangan per OPD
+    $totalPerOpd = [];
+    $totalPenguranganPerOpd = [];
+    $totalSetelahPenguranganPerOpd = [];
+
+    foreach ($data as $row) {
+        if (!isset($totalPerOpd[$row->nama_opd])) {
+            $totalPerOpd[$row->nama_opd] = 0;
+            $totalPenguranganPerOpd[$row->nama_opd] = 0;
+            $totalSetelahPenguranganPerOpd[$row->nama_opd] = 0;
+        }
+        $totalPerOpd[$row->nama_opd] += $row->pagu_original;
+
+        // Perhitungan nilai penyesuaian dan pagu setelah penyesuaian
+        $row->nilai_penyesuaian = ($row->pagu_original * $row->persentase_penyesuaian) / 100;
+        $row->pagu_setelah_penyesuaian = $row->pagu_original - $row->nilai_penyesuaian;
+
+        // Tambahkan total pagu pengurangan dan pagu setelah pengurangan per OPD
+        $totalPenguranganPerOpd[$row->nama_opd] += $row->nilai_penyesuaian;
+        $totalSetelahPenguranganPerOpd[$row->nama_opd] += $row->pagu_setelah_penyesuaian;
+    }
+
+    // Tambahkan nilai total ke setiap baris
+    foreach ($data as $row) {
+        $row->total_perjalanan_dinas = $totalPerOpd[$row->nama_opd] ?? 0;
+        $row->total_pengurangan_perjalanan_dinas = $totalPenguranganPerOpd[$row->nama_opd] ?? 0;
+        $row->total_setelah_pengurangan_perjalanan_dinas = $totalSetelahPenguranganPerOpd[$row->nama_opd] ?? 0;
+    }
+
+    return view('simulasi.perjalanan-dinas', compact('data'));
+}
+
+
+public function updatePersentasePd(Request $request)
+{
+    $request->validate([
+        'kode_opd' => 'required|string',
+        'kode_rekening' => 'required|string',
+        'persentase_penyesuaian' => 'required|numeric|min:0|max:100'
+    ]);
+
+    OpdRekeningPenyesuaian::updateOrCreate(
+        ['kode_opd' => $request->kode_opd, 'kode_rekening' => $request->kode_rekening],
+        ['persentase_penyesuaian' => $request->persentase_penyesuaian]
+    );
+
+    return response()->json(['success' => true]);
+}
+
+public function updateMassal(Request $request)
+{
+    $request->validate([
+        'data' => 'required|array',
+        'data.*.kode_opd' => 'required|string',
+        'data.*.kode_rekening' => 'required|string',
+        'data.*.persentase_penyesuaian' => 'required|numeric|min:0|max:100'
+    ]);
+
+    foreach ($request->data as $item) {
+        OpdRekeningPenyesuaian::updateOrCreate(
+            [
+                'kode_opd' => $item['kode_opd'],
+                'kode_rekening' => $item['kode_rekening']
+            ],
+            [
+                'persentase_penyesuaian' => $item['persentase_penyesuaian']
+            ]
+        );
+    }
+
+    return response()->json(['success' => true, 'message' => 'Semua perubahan berhasil disimpan!']);
+}
 
 
     
