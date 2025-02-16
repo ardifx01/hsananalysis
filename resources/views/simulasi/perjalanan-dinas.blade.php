@@ -122,7 +122,7 @@
                                     data-kode-opd="{{ $row->kode_skpd }}" 
                                     data-kode-rekening="{{ $row->kode_rekening }}" 
                                     value="{{ $row->persentase_penyesuaian }}">
-                                <input type="number" class="slider-value" 
+                                <input type="number" class="slider-value persentase-pengurangan-td" 
                                     data-kode-opd="{{ $row->kode_skpd }}" 
                                     data-kode-rekening="{{ $row->kode_rekening }}" 
                                     value="{{ $row->persentase_penyesuaian }}" min="0" max="100" step="1">
@@ -322,27 +322,39 @@
     });
 
    function exportToExcel() {
-        let table = document.getElementById("rekapTable");
-        let wb = XLSX.utils.table_to_book(table, { sheet: "Rekap Dinas" });
+    // 🔥 Pastikan nilai slider tersalin ke dalam kolom sebelum ekspor
+    $(".slider").each(function () {
+        let value = $(this).val();
+        $(this).closest("tr").find(".persentase-pengurangan-td");
+    });
 
-        // 🔥 Tambahkan Total Keseluruhan di Footer
-        let ws = wb.Sheets["Rekap Dinas"];
-        let lastRow = Object.keys(ws).length + 2;
+    let table = document.getElementById("rekapTable");
+    let wb = XLSX.utils.table_to_book(table, { sheet: "Rekap Dinas" });
 
-        XLSX.utils.sheet_add_aoa(ws, [
-            ["Total Keseluruhan", "", "", document.getElementById("totalPaguMurni").innerText, "", 
-            document.getElementById("totalPersentasePengurangan").innerText, "", 
-            document.getElementById("totalPaguPengurangan").innerText, "", 
-            document.getElementById("totalPaguSetelah").innerText]
-        ], { origin: lastRow });
+    // 🔥 Tambahkan Total Keseluruhan di Footer
+    let ws = wb.Sheets["Rekap Dinas"];
+    let lastRow = Object.keys(ws).length + 2;
 
-        XLSX.writeFile(wb, "rekap_perjalanan_dinas.xlsx");
-    }
+    XLSX.utils.sheet_add_aoa(ws, [
+        ["Total Keseluruhan", "", "", document.getElementById("totalPaguMurni").innerText, "", 
+        document.getElementById("totalPersentasePengurangan").innerText, "", 
+        document.getElementById("totalPaguPengurangan").innerText, "", 
+        document.getElementById("totalPaguSetelah").innerText]
+    ], { origin: lastRow });
+
+    XLSX.writeFile(wb, "rekap_perjalanan_dinas.xlsx");
+}
 
    function exportToPDF() {
     const { jsPDF } = window.jspdf;
     let doc = new jsPDF("l", "mm", "a4"); // 📄 Landscape Mode, A4 Size
     doc.text("Rekap Perjalanan Dinas", 14, 10);
+
+    // 🔥 Pastikan nilai slider tersalin ke dalam kolom sebelum ekspor
+    $(".slider").each(function () {
+        let value = $(this).val();
+        $(this).closest("tr").find(".persentase-pengurangan-td");
+    });
 
     // 🔥 Ambil tabel tanpa footer
     let table = document.getElementById("rekapTable");
@@ -375,7 +387,6 @@
     let totalPaguSetelah = document.getElementById("totalPaguSetelah").innerText;
 
     // 🔥 AutoTable untuk footer hanya di halaman terakhir
-    // 🔥 AutoTable untuk footer hanya di halaman terakhir, dengan angka ditebalkan
     doc.autoTable({
         startY: finalY,
         body: [
