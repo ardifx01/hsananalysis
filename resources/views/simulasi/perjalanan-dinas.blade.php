@@ -335,25 +335,76 @@
     // 🔥 Pastikan nilai slider tersalin ke dalam kolom sebelum ekspor
     $(".slider").each(function () {
         let value = $(this).val();
-        $(this).closest("tr").find(".persentase-pengurangan-td");
+        $(this).closest("tr").find(".persentase-pengurangan-td").text(value + "%"); // Salin ke sel persentase
     });
 
+    // 🔥 Ambil data dari tabel tanpa kolom slider
     let table = document.getElementById("rekapTable");
-    let wb = XLSX.utils.table_to_book(table, { sheet: "Rekap Dinas" });
 
-    // 🔥 Tambahkan Total Keseluruhan di Footer
-    let ws = wb.Sheets["Rekap Dinas"];
-    let lastRow = Object.keys(ws).length + 2;
+    // 🚀 Looping tabel untuk mengekstrak data dalam format array
+    let data = [];
+    let headers = [];
+    
+    // 🔥 Ambil header, tanpa kolom slider
+    $("#rekapTable thead th").each(function (index) {
+        if (index !== 5) { // Hapus kolom slider (indeks ke-6 dalam tabel)
+            headers.push($(this).text().trim());
+        }
+    });
+    data.push(headers); // Tambahkan header ke array data
 
-    XLSX.utils.sheet_add_aoa(ws, [
-        ["Total Keseluruhan", "", "", document.getElementById("totalPaguMurni").innerText, "", 
-        document.getElementById("totalPersentasePengurangan").innerText, "", 
-        document.getElementById("totalPaguPengurangan").innerText, "", 
-        document.getElementById("totalPaguSetelah").innerText]
-    ], { origin: lastRow });
+    // 🔥 Ambil isi tabel, tanpa kolom slider
+    $("#rekapTable tbody tr").each(function () {
+        let rowData = [];
+        $(this).find("td").each(function (index) {
+            if (index !== 5) { // Hapus kolom slider
+                let cellText = $(this).text().trim();
+                rowData.push(cellText);
+            }
+        });
+        data.push(rowData);
+    });
 
+    // 🔥 Ambil data ringkasan total dari tfoot
+    let totalPaguMurni = $("#totalPaguMurni").text().trim();
+    let totalPersentasePengurangan = $("#totalPersentasePengurangan").text().trim();
+    let totalPaguPengurangan = $("#totalPaguPengurangan").text().trim();
+    let totalPaguSetelah = $("#totalPaguSetelah").text().trim();
+
+    // 🔥 Tambahkan ringkasan total di bawah tabel dalam format yang lebih stabil
+    data.push([]);
+    data.push(["", "", "Ringkasan Total"]);
+    data.push(["", "", "Total Pagu Murni", totalPaguMurni]);
+    data.push(["", "", "Total Persentase Pengurangan", totalPersentasePengurangan]);
+    data.push(["", "", "Total Pagu Pengurangan", totalPaguPengurangan]);
+    data.push(["", "", "Total Pagu Setelah Pengurangan", totalPaguSetelah]);
+
+    // 🔥 Buat worksheet dari data array
+    let ws = XLSX.utils.aoa_to_sheet(data);
+
+    // 🔥 Perbaiki format angka agar tidak dianggap sebagai teks dalam Excel
+    let range = XLSX.utils.decode_range(ws["!ref"]);
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+        let col = XLSX.utils.encode_col(C);
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            let cellAddress = col + XLSX.utils.encode_row(R);
+            if (ws[cellAddress] && typeof ws[cellAddress].v === "string" && ws[cellAddress].v.match(/^\d{1,3}(\.\d{3})*(,\d+)?$/)) {
+                ws[cellAddress].t = "n"; // Ubah ke format angka
+                ws[cellAddress].v = parseFloat(ws[cellAddress].v.replace(/\./g, "").replace(",", ".")); // Konversi angka
+            }
+        }
+    }
+
+    // 🔥 Atur lebar kolom otomatis agar seluruh teks terlihat
+    ws["!cols"] = headers.map(() => ({ wch: 20 }));
+
+    // 🔥 Buat workbook dan ekspor ke file
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Rekap Dinas");
     XLSX.writeFile(wb, "rekap_perjalanan_dinas.xlsx");
 }
+
+
 
   function exportToPDF() {
     const { jsPDF } = window.jspdf;
