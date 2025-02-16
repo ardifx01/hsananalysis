@@ -96,7 +96,9 @@
                 <th>Nama Rekening</th>
                 <th class="text-end">Pagu Murni</th>
                 <th class="text-end">Total Perjalanan Dinas OPD</th>
-                <th class="text-end">Persentase Pengurangan</th>
+                <th class="text-end">Slider Persentase</th>
+                <th>Persentase Pengurangan</th>
+                
                 <th class="text-end">Pagu Pengurangan</th>
                 <th class="text-end">Total Pagu Pengurangan OPD</th>
                 <th class="text-end">Pagu Setelah Pengurangan</th>
@@ -122,13 +124,15 @@
                                     data-kode-opd="{{ $row->kode_skpd }}" 
                                     data-kode-rekening="{{ $row->kode_rekening }}" 
                                     value="{{ $row->persentase_penyesuaian }}">
-                                <input type="number" class="slider-value persentase-pengurangan-td" 
+                                
+                            </div>
+                        </td>
+                        <td class="text-end persentase-pengurangan-td"><input type="number" class="slider-value persentase-pengurangan-td" 
                                     data-kode-opd="{{ $row->kode_skpd }}" 
                                     data-kode-rekening="{{ $row->kode_rekening }}" 
                                     value="{{ $row->persentase_penyesuaian }}" min="0" max="100" step="1">
-                                <span>%</span>
-                            </div>
-                        </td>
+                                <span>%</span></td>
+                        
                         <td class="text-end pagu-pengurangan">0</td>
                         <td class="text-end bold total-pagu-pengurangan" data-kode-opd="{{ $row->kode_skpd }}">0</td>
                         <td class="text-end pagu-setelah">0</td>
@@ -143,19 +147,23 @@
                         <td>{{ $row->nama_rekening }}</td>
                         <td class="text-end pagu-murni" data-pagu="{{ $row->pagu_original }}">{{ number_format($row->pagu_original, 2, ',', '.') }}</td>
                         <td></td>
+                        
                         <td class="text-end">
                             <div class="slider-container">
                                 <input type="range" class="slider" min="0" max="100" step="1"
                                     data-kode-opd="{{ $row->kode_skpd }}" 
                                     data-kode-rekening="{{ $row->kode_rekening }}" 
                                     value="{{ $row->persentase_penyesuaian }}">
-                                <input type="number" class="slider-value" 
+                                
+                            </div>
+                        </td>
+                        <td class="text-end persentase-pengurangan-td">
+                        <input type="number" class="slider-value" 
                                     data-kode-opd="{{ $row->kode_skpd }}" 
                                     data-kode-rekening="{{ $row->kode_rekening }}" 
                                     value="{{ $row->persentase_penyesuaian }}" min="0" max="100" step="1">
                                 <span>%</span>
-                            </div>
-                        </td>
+                                </td>
                         <td class="text-end pagu-pengurangan">0</td>
                         <td></td>
                         <td class="text-end pagu-setelah">0</td>
@@ -169,6 +177,7 @@
     <tr class="total-row">
         <td colspan="4" class="text-end">Total Keseluruhan:</td>
         <td class="text-end" id="totalPaguMurni">0</td>
+        <td></td>
         <td class="text-end bold" id="totalPersentasePengurangan">0%</td>
         <td></td>
         <td class="text-end bold" id="totalPaguPengurangan">0</td>
@@ -206,6 +215,7 @@
             let kodeRekening = $(this).data("kode-rekening");
             let persentase = parseFloat($(this).val()) || 0;
             let row = $(this).closest("tr");
+            
 
             let paguMurni = parseFloat(row.find(".pagu-murni").data("pagu")) || 0;
             let paguPengurangan = (paguMurni * persentase) / 100;
@@ -345,40 +355,65 @@
     XLSX.writeFile(wb, "rekap_perjalanan_dinas.xlsx");
 }
 
-   function exportToPDF() {
+  function exportToPDF() {
     const { jsPDF } = window.jspdf;
-    let doc = new jsPDF("l", "mm", "a4"); // 📄 Landscape Mode, A4 Size
+    let doc = new jsPDF("l", "mm", "a4"); // 📄 Mode Landscape, Ukuran A4
+
+    doc.setFontSize(12);
     doc.text("Rekap Perjalanan Dinas", 14, 10);
 
     // 🔥 Pastikan nilai slider tersalin ke dalam kolom sebelum ekspor
     $(".slider").each(function () {
         let value = $(this).val();
-        $(this).closest("tr").find(".persentase-pengurangan-td");
+        $(this).closest("tr").find(".persentase-pengurangan-td").text(value + "%"); // Salin ke sel tabel
     });
 
-    // 🔥 Ambil tabel tanpa footer
-    let table = document.getElementById("rekapTable");
-    let thead = table.getElementsByTagName("thead")[0].innerHTML;
-    let tbody = table.getElementsByTagName("tbody")[0].innerHTML;
-
-    // 🔥 Buat tabel sementara tanpa footer
+    // 🔥 Ambil seluruh tabel kecuali tfoot
     let tempTable = document.createElement("table");
-    tempTable.innerHTML = `<thead>${thead}</thead><tbody>${tbody}</tbody>`;
+    let tableClone = document.getElementById("rekapTable").cloneNode(true);
+    
+    let tfootClone = tableClone.getElementsByTagName("tfoot")[0];
+    if (tfootClone) {
+        tfootClone.remove(); // Hapus footer dari tabel sebelum di-render
+    }
 
-    // 🔥 AutoTable untuk isi tabel (tanpa footer)
+    tempTable.innerHTML = tableClone.innerHTML; // Salin isi tabel tanpa footer
+
+    // 🚀 Hapus kolom slider sebelum ekspor
+    $(tempTable).find("thead th:nth-child(6), tbody td:nth-child(6)").remove();
+
+    // 🔥 AutoTable dengan perbaikan layout agar semua kolom tampil
     let finalY = doc.autoTable({
         html: tempTable,
         theme: "grid",
         startY: 20,
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontSize: 9 },
-        columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 40 }, 2: { cellWidth: 40 } }
+        margin: { left: 10, right: 10 }, // 🔥 Lebar tabel dimaksimalkan
+        styles: { fontSize: 7, cellPadding: 2, overflow: 'linebreak' }, // 🔥 Agar tidak terpotong
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontSize: 8 },
+        columnStyles: { 
+            0: { cellWidth: 8 },   // No
+            1: { cellWidth: 35 },  // Nama OPD
+            2: { cellWidth: 40 },  // Nama Rekening
+            3: { cellWidth: 25 },  // Pagu Murni
+            4: { cellWidth: 30 },  // Total Perjalanan Dinas
+            5: { cellWidth: 20 },  // Persentase Pengurangan
+            6: { cellWidth: 30 },  // Pagu Pengurangan
+            7: { cellWidth: 30 },  // Total Pagu Pengurangan OPD
+            8: { cellWidth: 30 },  // Pagu Setelah Pengurangan
+            9: { cellWidth: 30 }   // Total Pagu Setelah Pengurangan OPD
+        },
+        didDrawPage: function (data) {
+            // 🔥 Pastikan tabel tidak terpotong dan ada margin yang cukup di bawah
+            doc.setDrawColor(0);
+            doc.setLineWidth(0.5);
+            doc.line(10, data.cursor.y + 2, 287, data.cursor.y + 2);
+        }
     }).lastAutoTable.finalY;
 
-    // 🔥 Ambil jumlah halaman
+    // 🔥 Pastikan footer hanya ada di halaman terakhir
     let totalPages = doc.getNumberOfPages();
-    doc.setPage(totalPages); // Pindah ke halaman terakhir
-    finalY = doc.internal.pageSize.height - 40; // Letakkan footer di bagian bawah
+    doc.setPage(totalPages);
+    finalY += 10; // Beri jarak dari tabel terakhir
 
     // 🔥 Ambil data dari tfoot
     let totalPaguMurni = document.getElementById("totalPaguMurni").innerText;
@@ -386,26 +421,21 @@
     let totalPaguPengurangan = document.getElementById("totalPaguPengurangan").innerText;
     let totalPaguSetelah = document.getElementById("totalPaguSetelah").innerText;
 
-    // 🔥 AutoTable untuk footer hanya di halaman terakhir
-    doc.autoTable({
-        startY: finalY,
-        body: [
-            ["Pagu Murni", { content: totalPaguMurni, styles: { fontStyle: "bold" } }, 
-             "Persentase", { content: totalPersentasePengurangan, styles: { fontStyle: "bold" } }, 
-             "Pagu Pengurangan", { content: totalPaguPengurangan, styles: { fontStyle: "bold" } }, 
-             "Pagu Setelah Pengurangan", { content: totalPaguSetelah, styles: { fontStyle: "bold" } }]
-        ],
-        styles: { fontSize: 8 },
-        columnStyles: { 1: { cellWidth: 30 }, 3: { cellWidth: 30 }, 5: { cellWidth: 30 }, 7: { cellWidth: 30 } }
-    });
+    // 🔥 Tambahkan ringkasan total dalam kotak di bawah tabel di halaman terakhir
+    doc.setFontSize(10);
+    doc.setFillColor(230, 230, 230); // 🔥 Warna background abu-abu
+    doc.rect(170, finalY, 110, 30, 'F'); // 🔥 Kotak ringkasan total
+    doc.setTextColor(0);
+    doc.text("Ringkasan Total:", 175, finalY + 5);
+    doc.setFontSize(9);
+    doc.text(`• Pagu Murni: Rp ${totalPaguMurni}`, 175, finalY + 10);
+    doc.text(`• Persentase Pengurangan: ${totalPersentasePengurangan}`, 175, finalY + 15);
+    doc.text(`• Pagu Pengurangan: Rp ${totalPaguPengurangan}`, 175, finalY + 20);
+    doc.text(`• Pagu Setelah: Rp ${totalPaguSetelah}`, 175, finalY + 25);
 
+    // 🔥 Simpan PDF
     doc.save("rekap_perjalanan_dinas.pdf");
 }
-
-
-
-
-
 
 
 
