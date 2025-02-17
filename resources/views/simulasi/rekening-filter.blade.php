@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Simulasi perbadingan rekening semua OPD')
-@section('page-title', 'Simulasi perbadingan rekening semua OPD')
+@section('title', 'Set % Rekening Belanja / Perbandingan Per OPD')
+@section('page-title', 'Set % Rekening Belanja / Perbandingan Per OPD')
 
 @section('content')
 <!-- ✅ Tambahkan DataTables CSS -->

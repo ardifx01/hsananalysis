@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Rekap Perjalanan Dinas')
-@section('page-title', 'Rekap Perjalanan Dinas')
+@section('title', 'Set % perjalanan dinas / Perbandingan Per OPD')
+@section('page-title', 'Set % perjalanan dinas / Perbandingan Per OPD')
 
 @section('content')
 <!-- ✅ Tambahkan DataTables CSS -->

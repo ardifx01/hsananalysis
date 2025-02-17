@@ -60,8 +60,8 @@
                 </li>
                 {{-- database --}}
                 <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="collapse" href="#horizontal-menu" role="button"
-                        aria-expanded="false" aria-controls="horizontal-menu">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#compare-menu" role="button"
+                        aria-expanded="false" aria-controls="compare-menu">
                         <i class="icon">
 
                             <svg width="20" viewBox="0 0 24 24" fill="none"
@@ -201,7 +201,7 @@
 
                 {{-- simulasi --}}
                 <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="collapse" href="#horizontal-menu" role="button"
+                    <a class="nav-link" data-bs-toggle="collapse" href="#simulasi-menu" role="button"
                         aria-expanded="false" aria-controls="horizontal-menu">
                         <i class="icon">
 
@@ -230,7 +230,7 @@
                             </svg>
                         </i>
                     </a>
-                    <ul class="sub-nav collapse" id="horizontal-menu" data-bs-parent="#sidebar-menu">
+                    <ul class="sub-nav collapse" id="simulasi-menu" data-bs-parent="#sidebar-menu">
                         <!-- Import Data -->
                         
 
@@ -301,7 +301,7 @@
                                     </svg>
                                 </i>
                                 <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Rekening</span>
+                                <span class="item-name">Rekap Rekening Belanja</span>
                             </a>
                         </li>
 
@@ -330,7 +330,7 @@
 
                 {{-- progress --}}
                 <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="collapse" href="#horizontal-menu" role="button"
+                    <a class="nav-link" data-bs-toggle="collapse" href="#progress-menu" role="button"
                         aria-expanded="false" aria-controls="horizontal-menu">
                         <i class="icon">
 
@@ -359,13 +359,13 @@
                             </svg>
                         </i>
                     </a>
-                    <ul class="sub-nav collapse" id="horizontal-menu" data-bs-parent="#sidebar-menu">
+                    <ul class="sub-nav collapse" id="progress-menu" data-bs-parent="#sidebar-menu">
                         <!-- Import Data -->
                         
 
 
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('set-rek') ? 'active' : '' }}" href="{{ route('set-rek') }}">
+                            <a class="nav-link " href="#">
                                 <i class="icon">
                                     <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
                                         viewBox="0 0 24 24" fill="currentColor">
@@ -374,12 +374,12 @@
                                     </svg>
                                 </i>
                                 <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Set Persentase Rek</span>
+                                <span class="item-name">Progres OPD</span>
                             </a>
                         </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('simulasi.set-opd-rek') ? 'active' : '' }}" href="{{ route('simulasi.set-opd-rek') }}">
+                         <li class="nav-item">
+                            <a class="nav-link " href="#">
                                 <i class="icon">
                                     <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
                                         viewBox="0 0 24 24" fill="currentColor">
@@ -388,68 +388,11 @@
                                     </svg>
                                 </i>
                                 <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Set Per OPD Per Rek</span>
+                                <span class="item-name">Progres Per Sub Kegiatan</span>
                             </a>
                         </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('simulasi.perjalanan-dinas') ? 'active' : '' }}" href="{{ route('simulasi.perjalanan-dinas') }}">
-                                <i class="icon">
-                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
-                                        viewBox="0 0 24 24" fill="currentColor">
-                                        <path
-                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
-                                    </svg>
-                                </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Set Rek PD</span>
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('simulasi.rekening-filter') ? 'active' : '' }}" href="{{ route('simulasi.rekening-filter') }}">
-                                <i class="icon">
-                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
-                                        viewBox="0 0 24 24" fill="currentColor">
-                                        <path
-                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
-                                    </svg>
-                                </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Filter by OPD by Rek</span>
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('simulasi.rekening') ? 'active' : '' }}" href="{{ route('simulasi.rekening') }}">
-                                <i class="icon">
-                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
-                                        viewBox="0 0 24 24" fill="currentColor">
-                                        <path
-                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
-                                    </svg>
-                                </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Rekening</span>
-                            </a>
-                        </li>
-
-                         
-
-
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('simulasi.pagu.opd') ? 'active' : '' }}" href="{{ route('simulasi.pagu.opd') }}">
-                                <i class="icon">
-                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
-                                        viewBox="0 0 24 24" fill="currentColor">
-                                        <path
-                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
-                                    </svg>
-                                </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Per OPD</span>
-                            </a>
-                        </li>
+                        
 
                         
                        

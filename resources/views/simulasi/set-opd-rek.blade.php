@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Simulasi Penyesuaian Per OPD')
-@section('page-title', 'Simulasi Penyesuaian Per OPD')
+@section('title', 'Set % Rek Belanja Per OPD')
+@section('page-title', 'Set % Rek Belanja Per OPD')
 
 @section('content')
 

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Simulasi Penyesuaian')
-@section('page-title', 'Simulasi Penyesuaian Anggaran')
+@section('title', 'Set % Rekening Belanja')
+@section('page-title', 'Set % Rekening Belanja')
 
 @section('content')
 

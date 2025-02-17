@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Rekap Pagu Per OPD')
-@section('page-title', 'Rekapitulasi Pagu Per OPD')
+@section('title', 'Rekap Penyesuaian % Pagu OPD')
+@section('page-title', 'Rekap Penyesuaian % Pagu OPD')
 
 @section('content')
 
