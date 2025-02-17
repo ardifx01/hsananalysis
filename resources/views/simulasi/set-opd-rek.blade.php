@@ -306,36 +306,63 @@
                         className: 'btn btn-danger',
                         orientation: 'landscape',
                         pageSize: 'A4',
-                        title: function() {
-                            var namaOpd = $("#kode_opd option:selected").text().trim();
-                            return namaOpd ? "Lampiran: Rekap penyesuaian rekening belanja " +
-                                namaOpd : "Rekapitulasi OPD";
-                        },
+                        
                         customize: function(doc) {
+    doc.defaultStyle.fontSize = 10;
+    doc.styles.tableHeader.fontSize = 12;
+    doc.styles.title.fontSize = 12;
+
+    let namaOpd = $("#kode_opd option:selected").text().trim().replace(/^\S+\s+-\s+/g, '') || "[nama OPD]";
+
+
+   // 🔥 Tambahkan Header Dokumen dengan format manual agar titik dua sejajar
+doc.content.splice(0, 0, {
+    absolutePosition: { x: 650, y: 10 }, // Posisikan di kanan atas
+    margin: [0, 0, 0, 10],
+    text: [
+        { text: "Lampiran I\n", fontSize: 10, bold: true },
+        { text: "Nomor   : ", fontSize: 10, bold: true },
+        { text: "900.1.112/04/TAPD\n", fontSize: 10 },
+        { text: "Tanggal : ", fontSize: 10, bold: true },
+        { text: "14 Februari 2025\n", fontSize: 10 }
+    ],
+    alignment: "left"
+});
+
+    // 🔥 Tambahkan Judul di Tengah
+    doc.content.splice(1, 0, {
+        alignment: "center",
+        margin: [0, 10, 0, 10],
+        text: [
+            { text: "Tabel efesiensi dan penyesuaian anggaran SKPD dalam pelaksanaan APBD T.A 2025\n", fontSize: 14, bold: true },
+            { text: namaOpd, fontSize: 14, bold: true }
+        ]
+    });
+
+     // 🔥 Hapus title default yang muncul di PDF
+        doc.content = doc.content.filter(function (content) {
+            return !(content.text && content.text.includes("Simulasi Penyesuaian Per OPD"));
+        });
+
     let tableContent = doc.content.find(item => item.table);
     if (!tableContent) return; // Jika tidak ada tabel, jangan lanjutkan
 
-    // 🔥 Ubah ukuran font agar lebih proporsional
-    doc.defaultStyle.fontSize = 10;
-    doc.styles.tableHeader.fontSize = 12;
-    doc.styles.title.fontSize = 14;
-
-    // 🔥 Ganti header tabel agar sesuai dengan permintaan
+    // 🔥 Sesuaikan Header Tabel
     tableContent.table.body[0] = [
         { text: "No", bold: true, alignment: "center" },
         { text: "Kode Rekening", bold: true, alignment: "center" },
         { text: "Nama Rekening", bold: true, alignment: "center" },
-        { text: "Pagu Murni", bold: true, alignment: "right" },  // 🔄 Sebelumnya: "Pagu Original"
-        { text: "Pagu Pengurangan", bold: true, alignment: "right" }, // 🔄 Sebelumnya: "Jumlah Penyesuaian"
-        { text: "Pagu Setelah Pengurangan", bold: true, alignment: "right" } // 🔄 Sebelumnya: "Pagu Setelah Penyesuaian"
+        { text: "Pagu Murni", bold: true, alignment: "right" },
+        { text: "Pagu Pengurangan", bold: true, alignment: "right" },
+        { text: "Pagu Setelah Pengurangan", bold: true, alignment: "right" }
     ];
 
     // 🔥 Hapus kolom persentase dari semua baris
     tableContent.table.body.forEach(function(row, index) {
         if (index > 0) {
-            row.splice(4, 1); // 🔥 Hapus kolom ke-4 (Persentase Penyesuaian)
+            row.splice(4, 1); // Hapus kolom persentase
 
-            // 🔥 Pastikan semua angka dalam kolom 3, 4, dan 5 berformat rata kanan
+            // Pastikan semua angka dalam kolom 3, 4, dan 5 berformat rata kanan
             row[3].alignment = "right"; // Pagu Murni
             row[4].alignment = "right"; // Pagu Pengurangan
             row[5].alignment = "right"; // Pagu Setelah Pengurangan
@@ -362,6 +389,20 @@
     objLayout['hLineWidth'] = function(i) { return 0.8; };
     objLayout['vLineWidth'] = function(i) { return 0.8; };
     tableContent.layout = objLayout;
+
+    
+
+    // 🔥 Tambahkan Kolom Tanda Tangan di Bawah Tabel Secara Dinamis
+    doc.content.push({
+        margin: [600, 40, 0, 0], // Jarak dari tabel agar tidak menempel
+        alignment: "left", // Teks tetap rata kiri
+        text: [
+            { text: "Sekretaris Daerah\n", fontSize: 12, bold: true },
+            { text: "Kabupaten Bengkalis\n", fontSize: 12, bold: true },
+            { text: "Selaku Ketua TAPD.\n\n\n\n\n", fontSize: 12, bold: true }, // Tambahkan enter untuk tanda tangan
+            { text: "Ersan Saputra. TH", fontSize: 12, bold: true }
+        ]
+    });
 }
 
 

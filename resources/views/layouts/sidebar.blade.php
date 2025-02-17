@@ -89,7 +89,7 @@
                             </svg>
                         </i>
                     </a>
-                    <ul class="sub-nav collapse" id="horizontal-menu" data-bs-parent="#sidebar-menu">
+                    <ul class="sub-nav collapse" id="compare-menu" data-bs-parent="#sidebar-menu">
                         <!-- Import Data -->
                         <li class="nav-item">
                         
