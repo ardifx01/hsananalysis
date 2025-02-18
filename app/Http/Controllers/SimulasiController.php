@@ -546,7 +546,7 @@ public function opdSubkegrekpd(Request $request)
     // Ambil daftar OPD yang unik
     $opds = DataAnggaran::select('kode_skpd', 'nama_skpd')->distinct()->orderBy('kode_skpd')->get();
     
-    return view('simulasi.opdSubkegrekpd', compact('opds'));
+    return view('simulasi.opdsubkegrekpd', compact('opds'));
 }
 
 public function getSubkegByOpd(Request $request)
