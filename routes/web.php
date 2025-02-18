@@ -32,6 +32,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/simulasi/rekap-pagu-opd', [SimulasiController::class, 'rekapPaguPerOpd'])->name('simulasi.pagu.opd');
     Route::get('/simulasi/perjalanan-dinas', [SimulasiController::class, 'perjalananDinasView'])->name('simulasi.perjalanan-dinas');
 
+
+    //TAMPILAN SIMULASI OPD SUB KEGIATAN REKNING PERJALANAN DINAS
+    Route::get('/simulasi/opdsubkegrekpd', [SimulasiController::class, 'opdSubkegrekpd'])->name('simulasi.opdsubkegrekpd');
+    Route::get('/simulasi/get-subkeg-by-opd', [SimulasiController::class, 'getSubkegByOpd'])->name('simulasi.get-subkeg-by-opd');
+
+    Route::get('/simulasi/get-rekap-bpd-by-opd', [SimulasiController::class, 'getRekapBpdByOpd'])->name('simulasi.get-rekap-bpd-by-opd');
+
+
+
+
+
     //FILTER
     Route::get('/simulasi/rekening-filter', [SimulasiController::class, 'rekeningFilterView'])->name('simulasi.rekening-filter');
     Route::post('/simulasi/rekening-filter/update', [SimulasiController::class, 'updateRekeningFilter'])->name('simulasi.rekening-filter.update');

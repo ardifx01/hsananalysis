@@ -18,7 +18,7 @@
 
 
             <!-- navbar -->
-            <h4 class="logo-title">APBD Analysis</h4>
+            <h4 class="logo-title">Analysis</h4>
         </a>
         <div class="sidebar-toggle" data-toggle="sidebar" data-active="true">
             <i class="icon">
@@ -221,7 +221,7 @@
                                     fill="currentColor"></path>
                             </svg>
                         </i>
-                        <span class="item-name">Simulasi</span>
+                        <span class="item-name">Kertas Kerja</span>
                         <i class="right-icon">
                             <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" width="18" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
@@ -302,6 +302,20 @@
                                 </i>
                                 <i class="sidenav-mini-icon"> K </i>
                                 <span class="item-name">Rekap Rekening Belanja</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('simulasi.opdsubkegrekpd') ? 'active' : '' }}" href="{{ route('simulasi.opdsubkegrekpd') }}">
+                                <i class="icon">
+                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
+                                        viewBox="0 0 24 24" fill="currentColor">
+                                        <path
+                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
+                                    </svg>
+                                </i>
+                                <i class="sidenav-mini-icon"> K </i>
+                                <span class="item-name">PD Sub Kegiatan </span>
                             </a>
                         </li>
 

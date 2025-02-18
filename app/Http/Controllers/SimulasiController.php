@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\RekeningPenyesuaian;
+use App\Models\DataAnggaran;
 use Illuminate\Support\Facades\DB;
 use App\Models\OpdRekeningPenyesuaian;
 
@@ -539,6 +540,97 @@ public function updateRekeningFilter(Request $request)
     return response()->json(['success' => true, 'message' => 'Semua perubahan berhasil disimpan!']);
 }
 
+
+public function opdSubkegrekpd(Request $request)
+{
+    // Ambil daftar OPD yang unik
+    $opds = DataAnggaran::select('kode_skpd', 'nama_skpd')->distinct()->orderBy('kode_skpd')->get();
+    
+    return view('simulasi.opdSubkegrekpd', compact('opds'));
+}
+
+public function getSubkegByOpd(Request $request)
+{
+    // Validasi input
+    $request->validate([
+        'kode_opd' => 'required|string|exists:data_anggarans,kode_skpd'
+    ]);
+
+    $kodeOpd = $request->kode_opd;
+
+    // Ambil daftar sub kegiatan berdasarkan OPD
+    $subkegiatan = DataAnggaran::where('kode_skpd', $kodeOpd)
+        ->where('tipe_data', 'original')
+        ->select('kode_sub_kegiatan', 'nama_sub_kegiatan', \DB::raw('SUM(pagu) as pagu_murni'))
+        ->groupBy('kode_sub_kegiatan', 'nama_sub_kegiatan')
+        ->orderBy('kode_sub_kegiatan')
+        ->get();
+
+    // Ambil hanya rekening "Belanja Perjalanan Dinas%"
+    $rekeningList = DataAnggaran::where('kode_skpd', $kodeOpd)
+        ->where('tipe_data', 'original')
+        ->where('nama_rekening', 'like', 'Belanja Perjalanan Dinas%') 
+        ->select('kode_sub_kegiatan', 'kode_rekening', 'nama_rekening', 'pagu')
+        ->orderBy('kode_sub_kegiatan')
+        ->orderBy('kode_rekening')
+        ->get();
+
+    // Gabungkan data ke dalam format yang sesuai
+    $result = [];
+
+    foreach ($subkegiatan as $sub) {
+        $rekeningData = $rekeningList->where('kode_sub_kegiatan', $sub->kode_sub_kegiatan)->values();
+
+        if ($rekeningData->isNotEmpty()) {
+            foreach ($rekeningData as $index => $rek) {
+                $result[] = [
+                    'kode_sub_kegiatan' => $index === 0 ? $sub->kode_sub_kegiatan : '',
+                    'nama_sub_kegiatan' => $index === 0 ? $sub->nama_sub_kegiatan : '',
+                    'pagu_murni'        => $index === 0 ? number_format($sub->pagu_murni, 0, ',', '.') : '',
+                    'kode_rekening'     => $rek->kode_rekening,
+                    'nama_rekening'     => $rek->nama_rekening,
+                    'pagu'              => number_format($rek->pagu, 0, ',', '.')
+                ];
+            }
+        } else {
+            // Jika sub kegiatan tidak memiliki rekening "Belanja Perjalanan Dinas%", tetap tampilkan sub kegiatannya
+            $result[] = [
+                'kode_sub_kegiatan' => $sub->kode_sub_kegiatan,
+                'nama_sub_kegiatan' => $sub->nama_sub_kegiatan,
+                'pagu_murni'        => number_format($sub->pagu_murni, 0, ',', '.'),
+                'kode_rekening'     => '-',
+                'nama_rekening'     => '-',
+                'pagu'              => '-'
+            ];
+        }
+    }
+
+    return response()->json($result);
+}
+
+public function getRekapBpdByOpd(Request $request)
+{
+    $request->validate([
+        'kode_opd' => 'required|string|exists:data_anggarans,kode_skpd'
+    ]);
+
+    $kodeOpd = $request->kode_opd;
+
+    // Ambil data Belanja Perjalanan Dinas di OPD ini
+    $data = DataAnggaran::where('kode_skpd', $kodeOpd)
+        ->where('tipe_data', 'original')
+        ->where('nama_rekening', 'like', 'Belanja Perjalanan Dinas%')
+        ->select(
+            'kode_rekening',
+            'nama_rekening',
+            DB::raw('SUM(pagu) as total_pagu')
+        )
+        ->groupBy('kode_rekening', 'nama_rekening')
+        ->orderBy('kode_rekening')
+        ->get();
+
+    return response()->json($data);
+}
 
     
 }
