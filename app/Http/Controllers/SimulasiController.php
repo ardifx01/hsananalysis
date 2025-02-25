@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use App\Models\RekeningPenyesuaian;
 use App\Models\DataAnggaran;
 use Illuminate\Support\Facades\DB;
@@ -575,6 +576,19 @@ public function getSubkegByOpd(Request $request)
         ->orderBy('kode_rekening')
         ->get();
 
+    
+    // Ambil persentase penyesuaian dari tabel 'opd_skr_penyesuaian'
+    $penyesuaian = \DB::table('opd_skr_penyesuaian')
+    ->where('kode_opd', $kodeOpd)
+    ->select('kode_sub_kegiatan', 'kode_rekening', 'persentase')
+    ->get();
+
+// Buat map [kode_sub_keg][kode_rek] => persentase
+$persenMap = [];
+foreach ($penyesuaian as $ps) {
+    $persenMap[$ps->kode_sub_kegiatan][$ps->kode_rekening] = $ps->persentase;
+}
+
     // Gabungkan data ke dalam format yang sesuai
     $result = [];
 
@@ -583,13 +597,16 @@ public function getSubkegByOpd(Request $request)
 
         if ($rekeningData->isNotEmpty()) {
             foreach ($rekeningData as $index => $rek) {
+                // Cari persentase dari map, jika tidak ada => 0
+                $persen = $persenMap[$sub->kode_sub_kegiatan][$rek->kode_rekening] ?? 0;
                 $result[] = [
                     'kode_sub_kegiatan' => $index === 0 ? $sub->kode_sub_kegiatan : '',
                     'nama_sub_kegiatan' => $index === 0 ? $sub->nama_sub_kegiatan : '',
                     'pagu_murni'        => $index === 0 ? number_format($sub->pagu_murni, 0, ',', '.') : '',
                     'kode_rekening'     => $rek->kode_rekening,
                     'nama_rekening'     => $rek->nama_rekening,
-                    'pagu'              => number_format($rek->pagu, 0, ',', '.')
+                    'pagu'              => number_format($rek->pagu, 0, ',', '.'),
+                    'persentase'       => $persen  // <-- Tambahkan persentase
                 ];
             }
         } else {
@@ -600,7 +617,8 @@ public function getSubkegByOpd(Request $request)
                 'pagu_murni'        => number_format($sub->pagu_murni, 0, ',', '.'),
                 'kode_rekening'     => '-',
                 'nama_rekening'     => '-',
-                'pagu'              => '-'
+                'pagu'              => '-',
+                'persentase'        => 0  // default 0
             ];
         }
     }
@@ -632,5 +650,48 @@ public function getRekapBpdByOpd(Request $request)
     return response()->json($data);
 }
 
-    
+
+public function updatePersentaseSubkeg(Request $request)
+{
+    try {
+        Log::info('Request masuk:', ['data' => $request->all()]);
+
+        $data = $request->input('data');
+
+        if (!$data || !is_array($data)) {
+            return response()->json(['status' => 'error', 'message' => 'Data tidak valid'], 400);
+        }
+
+        foreach ($data as $item) {
+            // Pastikan semua parameter ada
+            if (!isset($item['kode_opd'], $item['kode_sub_kegiatan'], $item['kode_rekening'], $item['persentase'])) {
+                Log::error('Data tidak lengkap:', $item);
+                continue;
+            }
+
+            Log::info('Menyimpan data:', $item);
+
+            // Update atau Insert ke `opd_skr_penyesuaian`
+            DB::table('opd_skr_penyesuaian')->updateOrInsert(
+                [
+                    'kode_opd' => $item['kode_opd'],
+                    'kode_sub_kegiatan' => $item['kode_sub_kegiatan'],
+                    'kode_rekening' => $item['kode_rekening']
+                ],
+                [
+                    'persentase' => $item['persentase'],
+                    'updated_at' => now()
+                ]
+            );
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Data berhasil diperbarui']);
+
+    } catch (\Exception $e) {
+        Log::error('Gagal menyimpan data:', ['error' => $e->getMessage()]);
+        return response()->json(['status' => 'error', 'message' => 'Gagal menyimpan data', 'error' => $e->getMessage()], 500);
+    }
+}
+
+
 }

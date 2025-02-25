@@ -39,6 +39,13 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/simulasi/get-rekap-bpd-by-opd', [SimulasiController::class, 'getRekapBpdByOpd'])->name('simulasi.get-rekap-bpd-by-opd');
 
+    Route::post('/simulasi/updatepersentasesubkeg', [SimulasiController::class, 'updatePersentaseSubkeg'])->name('simulasi.updatepersentasesubkeg');
+
+    Route::post('/simulasi/update-persentase-subkeg', [SimulasiController::class, 'updatePersentasesubkeg'])
+    ->name('simulasi.updatepersentasesubkeg');
+
+
+
 
 
 

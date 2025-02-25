@@ -320,7 +320,7 @@ doc.content.splice(0, 0, {
     absolutePosition: { x: 650, y: 10 }, // Posisikan di kanan atas
     margin: [0, 0, 0, 10],
     text: [
-        { text: "Lampiran I\n", fontSize: 10, bold: true },
+        { text: "Lampiran \n", fontSize: 10, bold: true },
         { text: "Nomor   : ", fontSize: 10, bold: true },
         { text: "900.1.112/04/TAPD\n", fontSize: 10 },
         { text: "Tanggal : ", fontSize: 10, bold: true },
@@ -341,7 +341,7 @@ doc.content.splice(0, 0, {
 
      // 🔥 Hapus title default yang muncul di PDF
         doc.content = doc.content.filter(function (content) {
-            return !(content.text && content.text.includes("Simulasi Penyesuaian Per OPD"));
+            return !(content.text && content.text.includes("Set % Rek Belanja Per OPD"));
         });
 
     let tableContent = doc.content.find(item => item.table);
