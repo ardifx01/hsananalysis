@@ -97,7 +97,7 @@
             },
             columnDefs: [
                 {
-                    targets: [3], // Kolom yang akan disembunyikan
+                    targets: [4], // Kolom yang akan disembunyikan
                     visible: false,
                     searchable: false
                 }
