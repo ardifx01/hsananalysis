@@ -7,6 +7,10 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SimulasiController;
 use App\Http\Controllers\RekapPerOpdController;
 
+use App\Http\Controllers\ProgressController;
+
+Route::get('/progress', [ProgressController::class, 'index'])->name('progress.index');
+
 // Dashboard tetap bisa diakses tanpa login
 Route::get('/', function () {
     return view('dashboard');

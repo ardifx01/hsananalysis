@@ -306,7 +306,10 @@
                         className: 'btn btn-danger',
                         orientation: 'landscape',
                         pageSize: 'A4',
-                        
+                        filename: function() {
+                        var namaOpd = $("#kode_opd option:selected").text().trim().replace(/^\S+\s+-\s+/g, '') || "[nama OPD]";
+                        return namaOpd ? namaOpd.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_')  + ' - Tabel efesiensi dan penyesuaian anggaran SKPD dalam pelaksanaan APBD T.A 2025': 'Export_OPD' ;
+                    },
                         customize: function(doc) {
     doc.defaultStyle.fontSize = 10;
     doc.styles.tableHeader.fontSize = 12;
