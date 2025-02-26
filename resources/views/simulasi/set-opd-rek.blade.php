@@ -400,10 +400,7 @@ doc.content.splice(0, 0, {
         margin: [600, 40, 0, 0], // Jarak dari tabel agar tidak menempel
         alignment: "left", // Teks tetap rata kiri
         text: [
-            { text: "Sekretaris Daerah\n", fontSize: 12, bold: true },
-            { text: "Kabupaten Bengkalis\n", fontSize: 12, bold: true },
-            { text: "Selaku Ketua TAPD.\n\n\n\n\n", fontSize: 12, bold: true }, // Tambahkan enter untuk tanda tangan
-            { text: "Ersan Saputra. TH", fontSize: 12, bold: true }
+        
         ]
     });
 }
