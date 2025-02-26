@@ -327,7 +327,7 @@ doc.content.splice(0, 0, {
         { text: "Nomor   : ", fontSize: 10, bold: true },
         { text: "900.1.112/04/TAPD\n", fontSize: 10 },
         { text: "Tanggal : ", fontSize: 10, bold: true },
-        { text: "14 Februari 2025\n", fontSize: 10 }
+        { text: "25 Februari 2025\n", fontSize: 10 }
     ],
     alignment: "left"
 });
