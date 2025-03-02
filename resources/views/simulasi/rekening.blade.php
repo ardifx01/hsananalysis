@@ -41,6 +41,11 @@
     </style>
 
     <div class="container">
+    <div class="card">
+        <div class="card-header">
+            
+        </div>
+        <div class="card-body">
         <div class="table-responsive">
             <table id="rekapTable" class="table table-striped table-bordered table-sm">
                 <thead class="table-dark">
@@ -88,6 +93,8 @@
                 </tfoot>
 
             </table>
+        </div>
+        </div>
         </div>
     </div>
 

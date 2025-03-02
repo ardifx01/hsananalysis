@@ -34,46 +34,53 @@
 </style>
 
 <div class="container">
-
     <!-- Notifikasi Sukses -->
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <!-- Tombol Simpan Perubahan di Atas -->
-    <form action="{{ route('set-rek.update') }}" method="POST" id="update-form">
-        @csrf
-        <button type="submit" class="btn btn-success mb-3">Simpan Perubahan</button>
-
-        <div class="table-responsive">
-            <table id="rekapTable" class="table table-sm table-bordered">
-                <thead class="table-dark text-center">
-                    <tr>
-                        <th>Kode Rekening</th>
-                        <th>Nama Rekening</th>
-                        <th>Persentase</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($data as $row)
-                        <tr>
-                            <td class="text-center">
-                                <input type="hidden" name="kode_rekening[]" value="{{ $row->kode_rekening }}">
-                                {{ $row->kode_rekening }}
-                            </td>
-                            <td>{{ $row->nama_rekening }}</td>
-                            <td class="text-center">
-                                <input type="number" class="form-control input-small" 
-                                       name="persentase_penyesuaian[]" 
-                                       value="{{ $row->persentase_penyesuaian ?? 0 }}" 
-                                       min="0" max="100" step="0.01">
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+    <!-- Card Container -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">Set % Rekening Belanja</h5>
         </div>
-    </form>
+        <div class="card-body">
+            <!-- Tombol Simpan Perubahan di Atas -->
+            <form action="{{ route('set-rek.update') }}" method="POST" id="update-form">
+                @csrf
+                <button type="submit" class="btn btn-success mb-3">Simpan Perubahan</button>
+
+                <div class="table-responsive">
+                    <table id="rekapTable" class="table table-sm table-bordered">
+                        <thead class="table-dark text-center">
+                            <tr>
+                                <th>Kode Rekening</th>
+                                <th>Nama Rekening</th>
+                                <th>Persentase</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($data as $row)
+                                <tr>
+                                    <td class="text-center">
+                                        <input type="hidden" name="kode_rekening[]" value="{{ $row->kode_rekening }}">
+                                        {{ $row->kode_rekening }}
+                                    </td>
+                                    <td>{{ $row->nama_rekening }}</td>
+                                    <td class="text-center">
+                                        <input type="number" class="form-control input-small" 
+                                               name="persentase_penyesuaian[]" 
+                                               value="{{ $row->persentase_penyesuaian ?? 0 }}" 
+                                               min="0" max="100" step="0.01">
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -151,8 +158,6 @@
         ]
     });
 });
-
-
 </script>
 
 @endsection

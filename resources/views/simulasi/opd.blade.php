@@ -21,6 +21,11 @@
 </style>
 
 <div class="container">
+<div class="card">
+        <div class="card-header">
+        
+        </div>
+        <div class="card-body">
 
     <!-- Tabel Data -->
     <div class="table-responsive">
@@ -72,6 +77,8 @@
                 </tr>
             </tfoot>
         </table>
+    </div>
+    </div>
     </div>
 </div>
 

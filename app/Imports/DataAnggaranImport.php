@@ -10,15 +10,15 @@ use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 
-
-
 class DataAnggaranImport implements ToModel, WithHeadingRow
 {
-    private $tipe;
+    protected $tahapan_id;
+    protected $tanggal_upload;
 
-    public function __construct($tipe)
+    public function __construct($tahapan_id, $tanggal_upload)
     {
-        $this->tipe = $tipe;
+        $this->tahapan_id = $tahapan_id;
+        $this->tanggal_upload = $tanggal_upload;
     }
 
     public function model(array $row)
@@ -36,7 +36,8 @@ class DataAnggaranImport implements ToModel, WithHeadingRow
             'kode_rekening' => $row['kode_rekening'],
             'nama_rekening' => $row['nama_rekening'],
             'pagu' => $row['pagu'] ?? 0, // Jika kosong, set 0
-            'tipe_data' => $this->tipe,
+            'tahapan_id' => $this->tahapan_id,
+            'tanggal_upload' => $this->tanggal_upload,
         ]);
     }
 }

@@ -7,10 +7,12 @@
             <!--Logo start-->
             <div class="logo-main">
                 <div class="logo-normal">
-                   <img src="{{ asset('assets/images/bpkadlogomini.png') }}" alt="BPKAD Logo" style="width: 50px; margin-bottom: 10px;">
+                    <img src="{{ asset('assets/images/bpkadlogomini.png') }}" alt="BPKAD Logo"
+                        style="width: 50px; margin-bottom: 10px;">
                 </div>
                 <div class="logo-mini">
-                    <img src="{{ asset('assets/images/bpkadlogomini.png') }}" alt="BPKAD Logo" style="width: 50px; margin-bottom: 10px;">
+                    <img src="{{ asset('assets/images/bpkadlogomini.png') }}" alt="BPKAD Logo"
+                        style="width: 50px; margin-bottom: 10px;">
                 </div>
             </div>
             <!--logo End-->
@@ -43,7 +45,8 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" aria-current="page" href="{{ route('dashboard') }}">
+                    <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" aria-current="page"
+                        href="{{ route('dashboard') }}">
                         <i class="icon">
                             <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
                                 class="icon-20">
@@ -58,25 +61,97 @@
                         <span class="item-name">Dashboard</span>
                     </a>
                 </li>
+
+
+                {{-- DATABASE --}}
+
+               
+
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#database-menu" role="button"
+                        aria-expanded="false" aria-controls="database-menu">
+                        <i class="icon">
+
+                            <svg width="20" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg" class="icon-20">
+                                <path opacity="0.4"
+                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+                                    fill="currentColor"></path>
+                                <path
+                                    d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"
+                                    fill="currentColor"></path>
+                            </svg>
+                        </i>
+                        <span class="item-name">Database</span>
+                        <i class="right-icon">
+                            <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" width="18" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5l7 7-7 7" />
+                            </svg>
+                        </i>
+                    </a>
+                    <ul class="sub-nav collapse" id="database-menu" data-bs-parent="#sidebar-menu">
+                     
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('tahapan.index') ? 'active' : '' }}"
+                                href="{{ route('tahapan.index') }}">
+                                <i class="icon">
+                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
+                                        viewBox="0 0 24 24" fill="currentColor">
+                                        <path
+                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
+                                    </svg>
+                                </i>
+                                <i class="sidenav-mini-icon"> K </i>
+                                <span class="item-name">Jadwal Anggaran</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('data') ? 'active' : '' }}"
+                                href="{{ route('data') }}">
+                                <i class="icon">
+                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
+                                        viewBox="0 0 24 24" fill="currentColor">
+                                        <path
+                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
+                                    </svg>
+                                </i>
+                                <i class="sidenav-mini-icon"> K </i>
+                                <span class="item-name">Data Anggaran</span>
+                            </a>
+                        </li>
+
+                       
+
+
+
+                    </ul>
+                </li>
+                {{-- DATABASE --}}
+
+
+
+
+
+
+
+            
+
                 {{-- database --}}
                 <li class="nav-item">
                     <a class="nav-link" data-bs-toggle="collapse" href="#compare-menu" role="button"
                         aria-expanded="false" aria-controls="compare-menu">
                         <i class="icon">
 
-                            <svg width="20" viewBox="0 0 24 24" fill="none"
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg" class="icon-20">
                                 <path opacity="0.4"
-                                    d="M10.0833 15.958H3.50777C2.67555 15.958 2 16.6217 2 17.4393C2 18.2559 2.67555 18.9207 3.50777 18.9207H10.0833C10.9155 18.9207 11.5911 18.2559 11.5911 17.4393C11.5911 16.6217 10.9155 15.958 10.0833 15.958Z"
-                                    fill="currentColor"></path>
-                                <path opacity="0.4"
-                                    d="M22.0001 6.37867C22.0001 5.56214 21.3246 4.89844 20.4934 4.89844H13.9179C13.0857 4.89844 12.4102 5.56214 12.4102 6.37867C12.4102 7.1963 13.0857 7.86 13.9179 7.86H20.4934C21.3246 7.86 22.0001 7.1963 22.0001 6.37867Z"
+                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
                                     fill="currentColor"></path>
                                 <path
-                                    d="M8.87774 6.37856C8.87774 8.24523 7.33886 9.75821 5.43887 9.75821C3.53999 9.75821 2 8.24523 2 6.37856C2 4.51298 3.53999 3 5.43887 3C7.33886 3 8.87774 4.51298 8.87774 6.37856Z"
-                                    fill="currentColor"></path>
-                                <path
-                                    d="M21.9998 17.3992C21.9998 19.2648 20.4609 20.7777 18.5609 20.7777C16.6621 20.7777 15.1221 19.2648 15.1221 17.3992C15.1221 15.5325 16.6621 14.0195 18.5609 14.0195C20.4609 14.0195 21.9998 15.5325 21.9998 17.3992Z"
+                                    d="M15.59 7.41L14.17 6l-4.59 4.59L5 6 3.59 7.41 8.17 12l-4.58 4.59L5 18l4.59-4.59L14.17 18l1.42-1.41L10.83 12l4.76-4.59z"
                                     fill="currentColor"></path>
                             </svg>
                         </i>
@@ -90,26 +165,30 @@
                         </i>
                     </a>
                     <ul class="sub-nav collapse" id="compare-menu" data-bs-parent="#sidebar-menu">
-                        <!-- Import Data -->
+                       
+
                         <li class="nav-item">
-                        
-                            <a class="nav-link {{ request()->routeIs('import.page') ? 'active' : '' }}" href="/tools">
+                            <a class="nav-link {{ request()->routeIs('compare-opd') ? 'active' : '' }}"
+                                href="{{ route('compare-opd') }}">
                                 <i class="icon">
                                     <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
                                         viewBox="0 0 24 24" fill="currentColor">
                                         <path
-                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" />
+                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
                                     </svg>
                                 </i>
-                                <i class="sidenav-mini-icon"> S </i>
-                                <span class="item-name">Tools</span>
+                                <i class="sidenav-mini-icon"> R </i>
+                                <span class="item-name">Belanja OPD</span>
                             </a>
                         </li>
-                        <!-- Kelas -->
+                       
+                       
+
                         
 
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('compare') ? 'active' : '' }}" href="/compare/opd-rek">
+                            <a class="nav-link {{ request()->routeIs('compare-rek') ? 'active' : '' }}"
+                                href="{{ route('compare-rek') }}">
                                 <i class="icon">
                                     <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
                                         viewBox="0 0 24 24" fill="currentColor">
@@ -117,40 +196,14 @@
                                             d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
                                     </svg>
                                 </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Per SKPD Per Rek</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('compare-rek') ? 'active' : '' }}" href="/compare/rek">
-                                <i class="icon">
-                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
-                                        viewBox="0 0 24 24" fill="currentColor">
-                                        <path
-                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
-                                    </svg>
-                                </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Per Rek</span>
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('compare.sub-kegiatan') ? 'active' : '' }}" href="/compare/sub-kegiatan">
-                                <i class="icon">
-                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
-                                        viewBox="0 0 24 24" fill="currentColor">
-                                        <path
-                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
-                                    </svg>
-                                </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Per Sub Kegiaatan</span>
+                                <i class="sidenav-mini-icon"> R </i>
+                                <span class="item-name">Rek Belanja</span>
                             </a>
                         </li>
 
                          <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('compare-opd') ? 'active' : '' }}" href="/compare-opd">
+                            <a class="nav-link {{ request()->routeIs('compareDataOpdRek') ? 'active' : '' }}"
+                                href="{{ route('compareDataOpdRek') }}">
                                 <i class="icon">
                                     <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
                                         viewBox="0 0 24 24" fill="currentColor">
@@ -158,66 +211,33 @@
                                             d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
                                     </svg>
                                 </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Per OPD</span>
+                                <i class="sidenav-mini-icon"> R </i>
+                                <span class="item-name">Rek Belanja OPD</span>
                             </a>
                         </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('report.index') ? 'active' : '' }}" href="/report">
-                                <i class="icon">
-                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
-                                        viewBox="0 0 24 24" fill="currentColor">
-                                        <path
-                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
-                                    </svg>
-                                </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Report</span>
-                            </a>
-                        </li>
-
-                        {{-- <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('rekap.rekening') ? 'active' : '' }}" href="/rekap-rekening">
-                                <i class="icon">
-                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
-                                        viewBox="0 0 24 24" fill="currentColor">
-                                        <path
-                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
-                                    </svg>
-                                </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Rekap Rekening</span>
-                            </a>
-                        </li> --}}
-
-
-                        
                        
+
+
+
 
                     </ul>
                 </li>
                 {{-- database --}}
 
-                {{-- simulasi --}}
+                {{-- KERTAS KERJA --}}
                 <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="collapse" href="#simulasi-menu" role="button"
+                    <a class="nav-link" data-bs-toggle="collapse" href="#kertaskerja-menu" role="button"
                         aria-expanded="false" aria-controls="horizontal-menu">
                         <i class="icon">
 
-                            <svg width="20" viewBox="0 0 24 24" fill="none"
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg" class="icon-20">
                                 <path opacity="0.4"
-                                    d="M10.0833 15.958H3.50777C2.67555 15.958 2 16.6217 2 17.4393C2 18.2559 2.67555 18.9207 3.50777 18.9207H10.0833C10.9155 18.9207 11.5911 18.2559 11.5911 17.4393C11.5911 16.6217 10.9155 15.958 10.0833 15.958Z"
-                                    fill="currentColor"></path>
-                                <path opacity="0.4"
-                                    d="M22.0001 6.37867C22.0001 5.56214 21.3246 4.89844 20.4934 4.89844H13.9179C13.0857 4.89844 12.4102 5.56214 12.4102 6.37867C12.4102 7.1963 13.0857 7.86 13.9179 7.86H20.4934C21.3246 7.86 22.0001 7.1963 22.0001 6.37867Z"
+                                    d="M19 2H8C6.9 2 6 2.9 6 4V20C6 21.1 6.9 22 8 22H19C20.1 22 21 21.1 21 20V4C21 2.9 20.1 2 19 2ZM19 20H8V4H19V20Z"
                                     fill="currentColor"></path>
                                 <path
-                                    d="M8.87774 6.37856C8.87774 8.24523 7.33886 9.75821 5.43887 9.75821C3.53999 9.75821 2 8.24523 2 6.37856C2 4.51298 3.53999 3 5.43887 3C7.33886 3 8.87774 4.51298 8.87774 6.37856Z"
-                                    fill="currentColor"></path>
-                                <path
-                                    d="M21.9998 17.3992C21.9998 19.2648 20.4609 20.7777 18.5609 20.7777C16.6621 20.7777 15.1221 19.2648 15.1221 17.3992C15.1221 15.5325 16.6621 14.0195 18.5609 14.0195C20.4609 14.0195 21.9998 15.5325 21.9998 17.3992Z"
+                                    d="M16 10H11C10.45 10 10 9.55 10 9C10 8.45 10.45 8 11 8H16C16.55 8 17 8.45 17 9C17 9.55 16.55 10 16 10ZM16 14H11C10.45 14 10 13.55 10 13C10 12.45 10.45 12 11 12H16C16.55 12 17 12.45 17 13C17 13.55 16.55 14 16 14ZM16 18H11C10.45 18 10 17.55 10 17C10 16.45 10.45 16 11 16H16C16.55 16 17 16.45 17 17C17 17.55 16.55 18 16 18Z"
                                     fill="currentColor"></path>
                             </svg>
                         </i>
@@ -230,13 +250,14 @@
                             </svg>
                         </i>
                     </a>
-                    <ul class="sub-nav collapse" id="simulasi-menu" data-bs-parent="#sidebar-menu">
+                    <ul class="sub-nav collapse" id="kertaskerja-menu" data-bs-parent="#sidebar-menu">
                         <!-- Import Data -->
-                        
+
 
 
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('set-rek') ? 'active' : '' }}" href="{{ route('set-rek') }}">
+                            <a class="nav-link {{ request()->routeIs('set-rek') ? 'active' : '' }}"
+                                href="{{ route('set-rek') }}">
                                 <i class="icon">
                                     <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
                                         viewBox="0 0 24 24" fill="currentColor">
@@ -250,7 +271,8 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('simulasi.set-opd-rek') ? 'active' : '' }}" href="{{ route('simulasi.set-opd-rek') }}">
+                            <a class="nav-link {{ request()->routeIs('simulasi.set-opd-rek') ? 'active' : '' }}"
+                                href="{{ route('simulasi.set-opd-rek') }}">
                                 <i class="icon">
                                     <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
                                         viewBox="0 0 24 24" fill="currentColor">
@@ -264,7 +286,8 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('simulasi.perjalanan-dinas') ? 'active' : '' }}" href="{{ route('simulasi.perjalanan-dinas') }}">
+                            <a class="nav-link {{ request()->routeIs('simulasi.perjalanan-dinas') ? 'active' : '' }}"
+                                href="{{ route('simulasi.perjalanan-dinas') }}">
                                 <i class="icon">
                                     <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
                                         viewBox="0 0 24 24" fill="currentColor">
@@ -277,22 +300,48 @@
                             </a>
                         </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('simulasi.rekening-filter') ? 'active' : '' }}" href="{{ route('simulasi.rekening-filter') }}">
-                                <i class="icon">
-                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
-                                        viewBox="0 0 24 24" fill="currentColor">
-                                        <path
-                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
-                                    </svg>
-                                </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Filter by OPD by Rek</span>
-                            </a>
-                        </li>
+                        
+                        
+
+
+
+                    </ul>
+                </li>
+                {{-- KERTAS KERJA --}}
+
+                {{-- SIMULASI --}}
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#simulasi-menu" role="button"
+                        aria-expanded="false" aria-controls="horizontal-menu">
+                        <i class="icon">
+
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg" class="icon-20">
+                                <path opacity="0.4"
+                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+                                    fill="currentColor"></path>
+                                <path
+                                    d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"
+                                    fill="currentColor"></path>
+                            </svg>
+                        </i>
+                        <span class="item-name">Simulasi</span>
+                        <i class="right-icon">
+                            <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" width="18" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5l7 7-7 7" />
+                            </svg>
+                        </i>
+                    </a>
+                    <ul class="sub-nav collapse" id="simulasi-menu" data-bs-parent="#sidebar-menu">
+                        <!-- Import Data -->
+
+
 
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('simulasi.rekening') ? 'active' : '' }}" href="{{ route('simulasi.rekening') }}">
+                            <a class="nav-link {{ request()->routeIs('simulasi.rekening') ? 'active' : '' }}"
+                                href="{{ route('simulasi.rekening') }}">
                                 <i class="icon">
                                     <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
                                         viewBox="0 0 24 24" fill="currentColor">
@@ -306,7 +355,8 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('simulasi.opdsubkegrekpd') ? 'active' : '' }}" href="{{ route('simulasi.opdsubkegrekpd') }}">
+                            <a class="nav-link {{ request()->routeIs('simulasi.opdsubkegrekpd') ? 'active' : '' }}"
+                                href="{{ route('simulasi.opdsubkegrekpd') }}">
                                 <i class="icon">
                                     <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
                                         viewBox="0 0 24 24" fill="currentColor">
@@ -319,11 +369,12 @@
                             </a>
                         </li>
 
-                         
+
 
 
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('simulasi.pagu.opd') ? 'active' : '' }}" href="{{ route('simulasi.pagu.opd') }}">
+                            <a class="nav-link {{ request()->routeIs('simulasi.pagu.opd') ? 'active' : '' }}"
+                                href="{{ route('simulasi.pagu.opd') }}">
                                 <i class="icon">
                                     <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
                                         viewBox="0 0 24 24" fill="currentColor">
@@ -336,11 +387,10 @@
                             </a>
                         </li>
 
-                        
-                       
                     </ul>
                 </li>
-                {{-- simulasi --}}
+                {{-- SIMULASI --}}
+
 
                 {{-- progress --}}
                 <li class="nav-item">
@@ -348,19 +398,13 @@
                         aria-expanded="false" aria-controls="horizontal-menu">
                         <i class="icon">
 
-                            <svg width="20" viewBox="0 0 24 24" fill="none"
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg" class="icon-20">
                                 <path opacity="0.4"
-                                    d="M10.0833 15.958H3.50777C2.67555 15.958 2 16.6217 2 17.4393C2 18.2559 2.67555 18.9207 3.50777 18.9207H10.0833C10.9155 18.9207 11.5911 18.2559 11.5911 17.4393C11.5911 16.6217 10.9155 15.958 10.0833 15.958Z"
-                                    fill="currentColor"></path>
-                                <path opacity="0.4"
-                                    d="M22.0001 6.37867C22.0001 5.56214 21.3246 4.89844 20.4934 4.89844H13.9179C13.0857 4.89844 12.4102 5.56214 12.4102 6.37867C12.4102 7.1963 13.0857 7.86 13.9179 7.86H20.4934C21.3246 7.86 22.0001 7.1963 22.0001 6.37867Z"
+                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
                                     fill="currentColor"></path>
                                 <path
-                                    d="M8.87774 6.37856C8.87774 8.24523 7.33886 9.75821 5.43887 9.75821C3.53999 9.75821 2 8.24523 2 6.37856C2 4.51298 3.53999 3 5.43887 3C7.33886 3 8.87774 4.51298 8.87774 6.37856Z"
-                                    fill="currentColor"></path>
-                                <path
-                                    d="M21.9998 17.3992C21.9998 19.2648 20.4609 20.7777 18.5609 20.7777C16.6621 20.7777 15.1221 19.2648 15.1221 17.3992C15.1221 15.5325 16.6621 14.0195 18.5609 14.0195C20.4609 14.0195 21.9998 15.5325 21.9998 17.3992Z"
+                                    d="M12 6v6l4 2"
                                     fill="currentColor"></path>
                             </svg>
                         </i>
@@ -375,11 +419,12 @@
                     </a>
                     <ul class="sub-nav collapse" id="progress-menu" data-bs-parent="#sidebar-menu">
                         <!-- Import Data -->
-                        
+
 
 
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('progress.index') ? 'active' : '' }}" href="{{ route('progress.index') }}">
+                            <a class="nav-link {{ request()->routeIs('progress.index') ? 'active' : '' }}"
+                                href="{{ route('progress.index') }}">
                                 <i class="icon">
                                     <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
                                         viewBox="0 0 24 24" fill="currentColor">
@@ -388,34 +433,17 @@
                                     </svg>
                                 </i>
                                 <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Progres OPD</span>
-                            </a>
-                        </li>
-
-                         <li class="nav-item">
-                            <a class="nav-link " href="#">
-                                <i class="icon">
-                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
-                                        viewBox="0 0 24 24" fill="currentColor">
-                                        <path
-                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
-                                    </svg>
-                                </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Progres Per Sub Kegiatan</span>
+                                <span class="item-name">OPD</span>
                             </a>
                         </li>
 
                         
-
-                        
-                       
                     </ul>
                 </li>
                 {{-- progress end --}}
-                
-              
-              
+
+
+
             </ul>
             <!-- Sidebar Menu End -->
         </div>

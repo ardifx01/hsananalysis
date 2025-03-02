@@ -20,7 +20,8 @@ return new class extends Migration
             $table->string('kode_rekening');
             $table->string('nama_rekening');
             $table->decimal('pagu', 15, 2);
-            $table->enum('tipe_data', ['original', 'revisi']);
+            $table->foreignId('tahapan_id')->constrained('tahapan')->onDelete('cascade');
+            $table->timestamp('tanggal_upload'); // Ubah menjadi timestamp
             $table->timestamps();
         });
     }

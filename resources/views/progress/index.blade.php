@@ -1,172 +1,183 @@
 @extends('layouts.app')
 
-@section('title', 'Progress Pergeseran')
-@section('page-title', 'Progress Pergeseran')
+@section('title', 'Progress Entry Data')
+@section('page-title', 'Progress Entry Data')
 
 @section('content')
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
+
+<!-- Import DataTables & Buttons -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+
 <style>
-    .table-sm th, .table-sm td { padding: 4px 8px; font-size: 12px; }
+    .table-sm th, .table-sm td { padding: 6px 10px; font-size: 12px; }
+    tr.odd td.text-red {
+    color: red;
+}
+    tr.even td.text-red {
+    color: red;
+}
+     tr.odd td.text-green {
+    color: green;
+}
+     tr.odd td.text-green {
+    color: green;
+}
 </style>
 
 <div class="container">
+<div class="card">
+        <div class="card-header">
+            
+        </div>
+        <div class="card-body">
+
+    <!-- Tabel Data -->
     <div class="table-responsive">
-        <table id="progressTable" class="table table-striped table-bordered table-sm">
+        <table id="rekapTable" class="table table-striped table-bordered table-sm">
             <thead class="table-dark">
                 <tr>
                     <th>No</th>
                     <th>Kode OPD</th>
                     <th>Nama OPD</th>
                     <th>Pagu Murni</th>
-                    <th>Efesiensi</th>
-                    <th>Pagu Efesiensi</th>
-                    <th>Pergeseran</th>
-                    <th>Murni-Pergeseran</th> <!-- Kolom yang akan disembunyikan -->
-                    <th>Target Efesiensi</th>
+                    <th>Persentase Pengurangan</th>
+                    <th>Pagu Pengurangan</th>
+                    <th>Pagu Setelah Pengurangan</th>
+                    <th>Pagu Tahapan Terbaru<br>{{ $data->first()->tanggal_upload_terbaru }}</th>
+                    <th>Selisih</th>
                 </tr>
             </thead>
             <tbody>
+                @php
+                    $totalPaguOriginal = 0;
+                    $totalNilaiPenyesuaian = 0;
+                    $totalPaguSetelah = 0;
+                    $totalPaguTahapanTerbaru = 0;
+                    $totalSelisih = 0;
+                @endphp
+
                 @foreach($data as $index => $row)
+                    @php
+                        $totalPaguOriginal += $row->pagu_original;
+                        $totalNilaiPenyesuaian += $row->nilai_penyesuaian;
+                        $totalPaguSetelah += $row->pagu_setelah_penyesuaian;
+                        $totalPaguTahapanTerbaru += $row->pagu_tahapan_terbaru;
+                        $selisih = $row->pagu_setelah_penyesuaian - $row->pagu_tahapan_terbaru;
+                        $totalSelisih += $selisih;
+                    @endphp
                     <tr>
                         <td>{{ $index + 1 }}</td>
                         <td>{{ $row->kode_skpd }}</td>
-                        <td>{{ $row->nama_skpd }}</td>
+                        <td><a href="{{ url('/progress/opd-rek?kode_opd=' . $row->kode_skpd) }}">{{ $row->nama_skpd }}</a></td>
                         <td class="text-end">{{ number_format($row->pagu_original, 0, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($row->persentase_penyesuaian, 2, ',', '.') }}%</td>
                         <td class="text-end">{{ number_format($row->nilai_penyesuaian, 0, ',', '.') }}</td>
                         <td class="text-end">{{ number_format($row->pagu_setelah_penyesuaian, 0, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($row->pagu_revisi, 0, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($row->pagu_revisi - $row->pagu_original, 0, ',', '.') }}</td> <!-- Kolom yang akan disembunyikan -->
-                        <td class="text-end" style="color: {{ ($row->pagu_setelah_penyesuaian - $row->pagu_revisi) < 0 ? 'red' : 'green' }};">
-                            {{ number_format($row->pagu_setelah_penyesuaian - $row->pagu_revisi, 0, ',', '.') }}
-                        </td>
+                        <td class="text-end">{{ number_format($row->pagu_tahapan_terbaru, 0, ',', '.') }}</td>
+                        <td class="text-end {{ $selisih < 0 ? 'text-red' : 'text-green' }}">{{ number_format($selisih, 0, ',', '.') }}</td>
                     </tr>
                 @endforeach
             </tbody>
-            <tfoot>
+            <tfoot class="table-dark">
                 <tr>
                     <th colspan="3" class="text-end">Total</th>
-                    <th class="text-end"></th>
-                    <th class="text-end"></th>
-                    <th class="text-end"></th>
-                    <th class="text-end"></th>
-                    <th class="text-end"></th> <!-- Kolom yang akan disembunyikan -->
-                    <th class="text-end"></th>
+                    <th class="text-end">{{ number_format($totalPaguOriginal, 0, ',', '.') }}</th>
+                    <th class="text-end">
+                        {{ number_format(($totalPaguOriginal > 0 ? ($totalNilaiPenyesuaian / $totalPaguOriginal * 100) : 0), 2, ',', '.') }}%
+                    </th>
+                    <th class="text-end">{{ number_format($totalNilaiPenyesuaian, 0, ',', '.') }}</th>
+                    <th class="text-end">{{ number_format($totalPaguSetelah, 0, ',', '.') }}</th>
+                    <th class="text-end">{{ number_format($totalPaguTahapanTerbaru, 0, ',', '.') }}</th>
+                    <th class="text-end {{ $totalSelisih < 0 ? 'text-red' : 'text-green' }}">{{ number_format($totalSelisih, 0, ',', '.') }}</th>
                 </tr>
             </tfoot>
         </table>
+        </div>
+        </div>
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
-
+<!-- jQuery untuk DataTables & Export -->
 <script>
     $(document).ready(function() {
-        var table = $('#progressTable').DataTable({
+        var table = $('#rekapTable').DataTable({
             dom: 'Bfrtip',
             buttons: [
-                'copy', 'csv', 'excel', 'pdf', 'print'
+                { extend: 'copy', text: 'Copy', className: 'btn btn-secondary' },
+                { extend: 'csv', text: 'CSV', className: 'btn btn-info' },
+                { extend: 'excelHtml5', text: '📊 Download Excel', className: 'btn btn-success', footer: true,
+                    exportOptions: {
+                        columns: ':visible',
+                        modifier: { page: 'all' },
+                        format: {
+                            body: function(data, row, column, node) {
+                                return column === 0 ? row + 1 : data.replace(/\./g, '').replace(',', '.');
+                            },
+                            footer: function(data, row, column, node) {
+                                return data.replace(/\./g, '').replace(',', '.');
+                            }
+                        }
+                    }
+                },
+                { extend: 'pdfHtml5', 
+                    text: '📄 Download PDF', 
+                    className: 'btn btn-danger', 
+                    orientation: 'landscape', 
+                    pageSize: 'A4', 
+                    footer: true,
+                    exportOptions: { columns: ':visible', modifier: { page: 'all' } },
+                    customize: function(doc) {
+                        var totalPaguOriginal = $('#totalPaguOriginal').text();
+                        var totalPersentase = $('#totalPersentase').text();
+                        var totalNilaiPenyesuaian = $('#totalNilaiPenyesuaian').text();
+                        var totalPaguSetelah = $('#totalPaguSetelah').text();
+
+                    }
+                    
+                },
+                { extend: 'print', text: '🖨️ Print', className: 'btn btn-primary', footer: true }
             ],
             paging: false,
             searching: true,
-            ordering: true,
-            info: true,
             responsive: true,
-            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-            pageLength: 10,
-            language: {
-                search: "Cari:",
-                lengthMenu: "Tampilkan _MENU_ data per halaman",
-                zeroRecords: "Tidak ada data yang ditemukan",
-                info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-                infoEmpty: "Tidak ada data yang tersedia",
-                infoFiltered: "(difilter dari total _MAX_ data)",
-                paginate: {
-                    first: "Pertama",
-                    last: "Terakhir",
-                    next: "Berikutnya",
-                    previous: "Sebelumnya"
-                }
-            },
-            columnDefs: [
-                {
-                    targets: [4], // Kolom yang akan disembunyikan
-                    visible: false,
-                    searchable: false
-                }
-            ],
-            footerCallback: function (row, data, start, end, display) {
+            footerCallback: function(row, data, start, end, display) {
                 var api = this.api();
+                var totalPaguOriginal = 0, totalNilaiPenyesuaian = 0, totalPaguSetelah = 0, totalPaguTahapanTerbaru = 0, totalSelisih = 0;
 
-                // Remove the formatting to get integer data for summation
-                var intVal = function (i) {
-                    return typeof i === 'string' ?
-                        parseFloat(i.replace(/[\.,]/g, '')) || 0 :
-                        typeof i === 'number' ?
-                            i : 0;
-                };
+                api.rows({ search: 'applied' }).every(function() {
+                    var row = $(this.node());
+                    var paguOriginal = parseFloat(row.find('.pagu-original').text().replace(/\./g, '').replace(',', '.')) || 0;
+                    var nilaiPenyesuaian = parseFloat(row.find('.nilai-penyesuaian').text().replace(/\./g, '').replace(',', '.')) || 0;
+                    var paguSetelah = parseFloat(row.find('.pagu-setelah').text().replace(/\./g, '').replace(',', '.')) || 0;
+                    var paguTahapanTerbaru = parseFloat(row.find('.pagu-tahapan-terbaru').text().replace(/\./g, '').replace(',', '.')) || 0;
+                    var selisih = paguSetelah - paguTahapanTerbaru;
 
-                // Total over all pages
-                totalPaguOriginal = api
-                    .column(3)
-                    .data()
-                    .reduce(function (a, b) {
-                        return intVal(a) + intVal(b);
-                    }, 0);
+                    totalPaguOriginal += paguOriginal;
+                    totalNilaiPenyesuaian += nilaiPenyesuaian;
+                    totalPaguSetelah += paguSetelah;
+                    totalPaguTahapanTerbaru += paguTahapanTerbaru;
+                    totalSelisih += selisih;
+                });
 
-                totalNilaiPenyesuaian = api
-                    .column(4)
-                    .data()
-                    .reduce(function (a, b) {
-                        return intVal(a) + intVal(b);
-                    }, 0);
+                var totalPersentase = totalPaguOriginal > 0 ? (totalNilaiPenyesuaian / totalPaguOriginal * 100).toFixed(2) : 0;
 
-                totalPaguSetelahPenyesuaian = api
-                    .column(5)
-                    .data()
-                    .reduce(function (a, b) {
-                        return intVal(a) + intVal(b);
-                    }, 0);
-
-                totalPaguRevisi = api
-                    .column(6)
-                    .data()
-                    .reduce(function (a, b) {
-                        return intVal(a) + intVal(b);
-                    }, 0);
-
-                totalSelisih = api
-                    .column(7)
-                    .data()
-                    .reduce(function (a, b) {
-                        return intVal(a) + intVal(b);
-                    }, 0);
-
-                // Update footer
-                $(api.column(3).footer()).html(
-                    totalPaguOriginal.toLocaleString('id-ID')
-                );
-                $(api.column(4).footer()).html(
-                    totalNilaiPenyesuaian.toLocaleString('id-ID')
-                );
-                $(api.column(5).footer()).html(
-                    totalPaguSetelahPenyesuaian.toLocaleString('id-ID')
-                );
-                $(api.column(6).footer()).html(
-                    totalPaguRevisi.toLocaleString('id-ID')
-                );
-                $(api.column(7).footer()).html(
-                    totalSelisih.toLocaleString('id-ID')
-                );
+                $('#totalPaguOriginal').text(totalPaguOriginal.toLocaleString('id-ID'));
+                $('#totalPersentase').text(totalPersentase.toLocaleString('id-ID') + '%');
+                $('#totalNilaiPenyesuaian').text(totalNilaiPenyesuaian.toLocaleString('id-ID'));
+                $('#totalPaguSetelah').text(totalPaguSetelah.toLocaleString('id-ID'));
+                $('#totalPaguTahapanTerbaru').text(totalPaguTahapanTerbaru.toLocaleString('id-ID'));
+                $('#totalSelisih').text(totalSelisih.toLocaleString('id-ID')).addClass(totalSelisih < 0 ? 'text-red' : 'text-green');
             }
         });
     });
 </script>
+
 @endsection

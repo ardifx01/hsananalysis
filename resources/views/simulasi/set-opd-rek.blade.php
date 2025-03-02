@@ -46,20 +46,20 @@
             padding: 6px 10px;
             font-size: 12px;
             white-space: nowrap;
-            /* Mencegah teks memanjang keluar */
         }
 
         td.nama-rekening {
             max-width: 250px;
-            /* Tentukan ukuran tetap */
-
             white-space: normal;
-            /* Memungkinkan wrap text */
-
         }
     </style>
 
     <div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">Set % Rekening Belanja</h5>
+        </div>
+        <div class="card-body">
 
         <!-- Form Filter -->
         <form id="filter-form" class="row g-3 mb-3">
@@ -129,17 +129,12 @@
                                             name="persentase_penyesuaian[]" value="{{ $row->persentase_penyesuaian }}"
                                             min="0" max="100" step="0.01">
                                     </td>
-
                                     <td class="text-end nilai-penyesuaian" data-export="{{ $nilai_penyesuaian }}">
                                         {{ number_format($nilai_penyesuaian, 0, ',', '.') }}
                                     </td>
-
                                     <td class="text-end pagu-setelah" data-export="{{ $pagu_setelah }}">
                                         {{ number_format($pagu_setelah, 0, ',', '.') }}
                                     </td>
-
-
-
                                 </tr>
                             @endforeach
                         </tbody>
@@ -158,6 +153,8 @@
         @else
             <div class="alert alert-info">Silakan pilih OPD untuk menampilkan data.</div>
         @endif
+        </div>
+        </div>
     </div>
 
     <!-- jQuery untuk DataTables & Perhitungan -->
@@ -185,10 +182,8 @@
 
                 $('tbody tr').each(function() {
                     let row = $(this);
-                    let paguOriginal = parseFloat(removeThousandSeparator(row.find('.pagu-original')
-                        .text())) || 0;
-                    let persentase = parseFloat(row.find('.persentase-penyesuaian').val().replace(',',
-                        '.')) || 0;
+                    let paguOriginal = parseFloat(removeThousandSeparator(row.find('.pagu-original').text())) || 0;
+                    let persentase = parseFloat(row.find('.persentase-penyesuaian').val().replace(',', '.')) || 0;
 
                     if (!isNaN(persentase) && paguOriginal > 0) {
                         jumlahBaris++;
@@ -213,8 +208,7 @@
                 $('#total-pagu-setelah').text(formatNumber(totalPaguSetelah));
 
                 // Hitung rata-rata persentase, hindari NaN jika jumlahBaris = 0
-                let avgPersentase = jumlahBaris > 0 ? formatPersentase((totalPersentase / jumlahBaris).toFixed(2)) :
-                    "0,00";
+                let avgPersentase = jumlahBaris > 0 ? formatPersentase((totalPersentase / jumlahBaris).toFixed(2)) : "0,00";
                 $('#total-persentase').text(avgPersentase + "%");
 
                 // Simpan nilai total untuk ekspor
@@ -247,8 +241,7 @@
                         footer: true,
                         filename: function() {
                             var namaOpd = $("#kode_opd option:selected").text().trim();
-                            return namaOpd ? namaOpd.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g,
-                                '_') : 'Export_OPD';
+                            return namaOpd ? namaOpd.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_') : 'Export_OPD';
                         },
                         exportOptions: {
                             columns: ':visible',
@@ -256,39 +249,28 @@
                                 body: function(data, row, column, node) {
                                     if (column === 3) {
                                         let nilai = $(node).attr('data-value');
-                                        return nilai ? nilai :
-                                            "0";
+                                        return nilai ? nilai : "0";
                                     }
                                     // Jika kolom persentase, ambil dari data-export
                                     if (column === 4) {
                                         let persen = $(node).attr('data-export');
                                         return persen ? persen : "0,00";
                                     }
-                                    if (column ===
-                                        5) { // Pastikan ini sesuai dengan indeks kolom di tabel
+                                    if (column === 5) { // Pastikan ini sesuai dengan indeks kolom di tabel
                                         let nilai = $(node).attr('data-export');
-                                        return nilai ? nilai :
-                                            "0"; // Ambil nilai asli tanpa titik pemisah ribuan
+                                        return nilai ? nilai : "0"; // Ambil nilai asli tanpa titik pemisah ribuan
                                     }
-
-                                    if (column ===
-                                        6) { // Pastikan ini sesuai dengan indeks kolom di tabel
+                                    if (column === 6) { // Pastikan ini sesuai dengan indeks kolom di tabel
                                         let nilai = $(node).attr('data-export');
-                                        return nilai ? nilai :
-                                            "0"; // Ambil nilai asli tanpa titik pemisah ribuan
+                                        return nilai ? nilai : "0"; // Ambil nilai asli tanpa titik pemisah ribuan
                                     }
                                     return data.replace(/<[^>]*>?/gm, '');
                                 },
                                 footer: function(data, row, column, node) {
-                                    let totalPaguOriginal = removeThousandSeparator($('#rekapTable')
-                                        .attr('data-total-pagu-original') || '0');
-                                    let totalNilaiPenyesuaian = removeThousandSeparator($(
-                                        '#rekapTable').attr(
-                                        'data-total-nilai-penyesuaian') || '0');
-                                    let totalPaguSetelah = removeThousandSeparator($('#rekapTable')
-                                        .attr('data-total-pagu-setelah') || '0');
-                                    let totalPersentase = $('#rekapTable').attr(
-                                        'data-total-persentase') || "0,00";
+                                    let totalPaguOriginal = removeThousandSeparator($('#rekapTable').attr('data-total-pagu-original') || '0');
+                                    let totalNilaiPenyesuaian = removeThousandSeparator($('#rekapTable').attr('data-total-nilai-penyesuaian') || '0');
+                                    let totalPaguSetelah = removeThousandSeparator($('#rekapTable').attr('data-total-pagu-setelah') || '0');
+                                    let totalPersentase = $('#rekapTable').attr('data-total-persentase') || "0,00";
 
                                     if (column === 3) return totalPaguOriginal;
                                     if (column === 4) return totalPersentase + "%";
@@ -307,106 +289,98 @@
                         orientation: 'landscape',
                         pageSize: 'A4',
                         filename: function() {
-                        var namaOpd = $("#kode_opd option:selected").text().trim().replace(/^\S+\s+-\s+/g, '') || "[nama OPD]";
-                        return namaOpd ? namaOpd.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_')  + ' - Tabel efesiensi dan penyesuaian anggaran SKPD dalam pelaksanaan APBD T.A 2025': 'Export_OPD' ;
-                    },
+                            var namaOpd = $("#kode_opd option:selected").text().trim().replace(/^\S+\s+-\s+/g, '') || "[nama OPD]";
+                            return namaOpd ? namaOpd.replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_') + ' - Tabel efesiensi dan penyesuaian anggaran SKPD dalam pelaksanaan APBD T.A 2025' : 'Export_OPD';
+                        },
                         customize: function(doc) {
-    doc.defaultStyle.fontSize = 10;
-    doc.styles.tableHeader.fontSize = 12;
-    doc.styles.title.fontSize = 12;
+                            doc.defaultStyle.fontSize = 10;
+                            doc.styles.tableHeader.fontSize = 12;
+                            doc.styles.title.fontSize = 12;
 
-    let namaOpd = $("#kode_opd option:selected").text().trim().replace(/^\S+\s+-\s+/g, '') || "[nama OPD]";
+                            let namaOpd = $("#kode_opd option:selected").text().trim().replace(/^\S+\s+-\s+/g, '') || "[nama OPD]";
 
+                            // 🔥 Tambahkan Header Dokumen dengan format manual agar titik dua sejajar
+                            doc.content.splice(0, 0, {
+                                absolutePosition: { x: 650, y: 10 }, // Posisikan di kanan atas
+                                margin: [0, 0, 0, 10],
+                                text: [
+                                    { text: "Lampiran \n", fontSize: 10, bold: true },
+                                    { text: "Nomor   : ", fontSize: 10, bold: true },
+                                    { text: "900.1.112/05/TAPD\n", fontSize: 10 },
+                                    { text: "Tanggal : ", fontSize: 10, bold: true },
+                                    { text: "25 Februari 2025\n", fontSize: 10 }
+                                ],
+                                alignment: "left"
+                            });
 
-   // 🔥 Tambahkan Header Dokumen dengan format manual agar titik dua sejajar
-doc.content.splice(0, 0, {
-    absolutePosition: { x: 650, y: 10 }, // Posisikan di kanan atas
-    margin: [0, 0, 0, 10],
-    text: [
-        { text: "Lampiran \n", fontSize: 10, bold: true },
-        { text: "Nomor   : ", fontSize: 10, bold: true },
-        { text: "900.1.112/05/TAPD\n", fontSize: 10 },
-        { text: "Tanggal : ", fontSize: 10, bold: true },
-        { text: "25 Februari 2025\n", fontSize: 10 }
-    ],
-    alignment: "left"
-});
+                            // 🔥 Tambahkan Judul di Tengah
+                            doc.content.splice(1, 0, {
+                                alignment: "center",
+                                margin: [0, 10, 0, 10],
+                                text: [
+                                    { text: "Tabel efesiensi dan penyesuaian anggaran SKPD dalam pelaksanaan APBD T.A 2025\n", fontSize: 14, bold: true },
+                                    { text: namaOpd, fontSize: 14, bold: true }
+                                ]
+                            });
 
-    // 🔥 Tambahkan Judul di Tengah
-    doc.content.splice(1, 0, {
-        alignment: "center",
-        margin: [0, 10, 0, 10],
-        text: [
-            { text: "Tabel efesiensi dan penyesuaian anggaran SKPD dalam pelaksanaan APBD T.A 2025\n", fontSize: 14, bold: true },
-            { text: namaOpd, fontSize: 14, bold: true }
-        ]
-    });
+                            // 🔥 Hapus title default yang muncul di PDF
+                            doc.content = doc.content.filter(function(content) {
+                                return !(content.text && content.text.includes("Set % Rek Belanja Per OPD"));
+                            });
 
-     // 🔥 Hapus title default yang muncul di PDF
-        doc.content = doc.content.filter(function (content) {
-            return !(content.text && content.text.includes("Set % Rek Belanja Per OPD"));
-        });
+                            let tableContent = doc.content.find(item => item.table);
+                            if (!tableContent) return; // Jika tidak ada tabel, jangan lanjutkan
 
-    let tableContent = doc.content.find(item => item.table);
-    if (!tableContent) return; // Jika tidak ada tabel, jangan lanjutkan
+                            // 🔥 Sesuaikan Header Tabel
+                            tableContent.table.body[0] = [
+                                { text: "No", bold: true, alignment: "center" },
+                                { text: "Kode Rekening", bold: true, alignment: "center" },
+                                { text: "Nama Rekening", bold: true, alignment: "center" },
+                                { text: "Pagu Murni", bold: true, alignment: "right" },
+                                { text: "Pagu Pengurangan", bold: true, alignment: "right" },
+                                { text: "Pagu Setelah Pengurangan", bold: true, alignment: "right" }
+                            ];
 
-    // 🔥 Sesuaikan Header Tabel
-    tableContent.table.body[0] = [
-        { text: "No", bold: true, alignment: "center" },
-        { text: "Kode Rekening", bold: true, alignment: "center" },
-        { text: "Nama Rekening", bold: true, alignment: "center" },
-        { text: "Pagu Murni", bold: true, alignment: "right" },
-        { text: "Pagu Pengurangan", bold: true, alignment: "right" },
-        { text: "Pagu Setelah Pengurangan", bold: true, alignment: "right" }
-    ];
+                            // 🔥 Hapus kolom persentase dari semua baris
+                            tableContent.table.body.forEach(function(row, index) {
+                                if (index > 0) {
+                                    row.splice(4, 1); // Hapus kolom persentase
 
-    // 🔥 Hapus kolom persentase dari semua baris
-    tableContent.table.body.forEach(function(row, index) {
-        if (index > 0) {
-            row.splice(4, 1); // Hapus kolom persentase
+                                    // Pastikan semua angka dalam kolom 3, 4, dan 5 berformat rata kanan
+                                    row[3].alignment = "right"; // Pagu Murni
+                                    row[4].alignment = "right"; // Pagu Pengurangan
+                                    row[5].alignment = "right"; // Pagu Setelah Pengurangan
+                                }
+                            });
 
-            // Pastikan semua angka dalam kolom 3, 4, dan 5 berformat rata kanan
-            row[3].alignment = "right"; // Pagu Murni
-            row[4].alignment = "right"; // Pagu Pengurangan
-            row[5].alignment = "right"; // Pagu Setelah Pengurangan
-        }
-    });
+                            // 🔥 Ambil total dari elemen footer di tabel HTML
+                            let totalPaguMurni = $("#total-pagu-original").text().trim();
+                            let totalPaguPengurangan = $("#total-nilai-penyesuaian").text().trim();
+                            let totalPaguSetelah = $("#total-pagu-setelah").text().trim();
 
-    // 🔥 Ambil total dari elemen footer di tabel HTML
-    let totalPaguMurni = $("#total-pagu-original").text().trim();
-    let totalPaguPengurangan = $("#total-nilai-penyesuaian").text().trim();
-    let totalPaguSetelah = $("#total-pagu-setelah").text().trim();
+                            // 🔥 Tambahkan baris total ke dalam PDF
+                            tableContent.table.body.push([
+                                { text: "TOTAL", bold: true, alignment: "right", colSpan: 3 },
+                                {},
+                                {},
+                                { text: totalPaguMurni, bold: true, alignment: "right" },
+                                { text: totalPaguPengurangan, bold: true, alignment: "right" },
+                                { text: totalPaguSetelah, bold: true, alignment: "right" }
+                            ]);
 
-    // 🔥 Tambahkan baris total ke dalam PDF
-    tableContent.table.body.push([
-        { text: "TOTAL", bold: true, alignment: "right", colSpan: 3 },
-        {},
-        {},
-        { text: totalPaguMurni, bold: true, alignment: "right" },
-        { text: totalPaguPengurangan, bold: true, alignment: "right" },
-        { text: totalPaguSetelah, bold: true, alignment: "right" }
-    ]);
+                            // 🔥 Sesuaikan tata letak tabel di PDF agar lebih enak dibaca
+                            let objLayout = {};
+                            objLayout['hLineWidth'] = function(i) { return 0.8; };
+                            objLayout['vLineWidth'] = function(i) { return 0.8; };
+                            tableContent.layout = objLayout;
 
-    // 🔥 Sesuaikan tata letak tabel di PDF agar lebih enak dibaca
-    let objLayout = {};
-    objLayout['hLineWidth'] = function(i) { return 0.8; };
-    objLayout['vLineWidth'] = function(i) { return 0.8; };
-    tableContent.layout = objLayout;
-
-    
-
-    // 🔥 Tambahkan Kolom Tanda Tangan di Bawah Tabel Secara Dinamis
-    doc.content.push({
-        margin: [600, 40, 0, 0], // Jarak dari tabel agar tidak menempel
-        alignment: "left", // Teks tetap rata kiri
-        text: [
-        
-        ]
-    });
-}
-
-
-
+                            // 🔥 Tambahkan Kolom Tanda Tangan di Bawah Tabel Secara Dinamis
+                            doc.content.push({
+                                margin: [600, 40, 0, 0], // Jarak dari tabel agar tidak menempel
+                                alignment: "left", // Teks tetap rata kiri
+                                text: []
+                            });
+                        }
                     },
                     {
                         extend: 'print',

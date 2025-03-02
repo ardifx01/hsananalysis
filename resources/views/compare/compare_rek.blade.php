@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Rekap Perbandingan Belanja OPD')
-@section('page-title', 'Perbandingan Belanja OPD')
+@section('title', 'Rekap Perbandingan Belanja Rekening')
+@section('page-title', 'Perbandingan Belanja Rekening')
 
 @section('content')
 
@@ -24,7 +24,7 @@
         padding: 10px;
         text-align: left;
         border-bottom: 1px solid #ddd;
-        font-size: 14px;
+        font-size: 10px;
     }
 
     th {
@@ -52,6 +52,12 @@
     .dt-buttons .btn {
         margin-right: 5px;
     }
+
+    .nama-rekening {
+        max-width: 150px; /* Atur ukuran kolom Nama Rekening */
+        white-space: normal; /* Wrap text */
+        word-wrap: break-word; /* Wrap text */
+    }
 </style>
 
 <!-- DataTables CSS -->
@@ -60,7 +66,7 @@
 
 <div class="card" data-aos="fade-up" data-aos-delay="800">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h4>Perbandingan Belanja OPD</h4>
+        <h4>Perbandingan Belanja Rekening</h4>
         <div class="dt-buttons"></div>
     </div>
 
@@ -69,44 +75,49 @@
             <table id="rekapTable" class="table table-striped table-bordered">
                 <thead>
                     <tr>
-                        <th>No</th> <!-- Kolom Nomor Urut -->
-                        <th>Kode OPD</th>
-                        <th>Nama OPD</th>
-                        <th>Pagu Murni</th>
-                        <th>Pagu Perubahan</th>
-                        <th>Selisih</th>
+                        <th  style="text-align: center;">No</th> <!-- Kolom Nomor Urut -->
+                        <th  style="text-align: center;">Kode Rekening</th>
+                        <th class="nama-rekening" style="text-align: center;">Nama Rekening</th>
+                        @foreach($rekap->first() as $data)
+                            <th style="text-align: center;">{{ optional($tahapans->find($data->tahapan_id))->name }}<br><span style="font-size:10px">{{ $data->tanggal_upload }}<br>{{ $data->jam_upload }}</span></th>
+                        @endforeach
+                        <th  style="text-align: center;">Selisih</th>
+                        <th  style="text-align: center;">Persentase Selisih</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($rekap as $index => $data)
+                    @foreach($rekap as $kode_rekening => $data)
                     <tr>
-                        <td>{{ $index + 1 }}</td> <!-- Nomor Urut Manual -->
-                        <td>{{ $data['kode_skpd'] }}</td>
-                        <td>{{ Str::limit($data['nama_skpd'], 50) }}</td>
-                        <td class="pagu-original">{{ number_format($data['pagu_original'], 2, ',', '.') }}</td>
-                        <td class="pagu-revisi">{{ number_format($data['pagu_revisi'], 2, ',', '.') }}</td>
-                        <td class="pagu-selisih">{{ number_format($data['selisih'], 2, ',', '.') }}</td>
+                        <td>{{ $loop->iteration }}</td> <!-- Nomor Urut Manual -->
+                        <td>{{ $kode_rekening }}</td>
+                        <td class="nama-rekening">{{ $data->first()->nama_rekening }}</td>
+                        @foreach($data as $item)
+                            <td class="total-pagu-{{ $item->tahapan_id }}-{{ $item->tanggal_upload }}-{{ $item->jam_upload }}">
+                                {{ number_format($item->total_pagu, 2, ',', '.') }}
+                            </td>
+                        @endforeach
+                        <td class="selisih-pagu">{{ number_format($selisihPagu[$kode_rekening], 2, ',', '.') }}</td>
+                        <td class="persentase-selisih-pagu">{{ number_format($persentaseSelisihPagu[$kode_rekening], 2, ',', '.') }}%</td>
                     </tr>
                     @endforeach
                 </tbody>
                 <tfoot>
                     <tr class="table-dark">
                         <th colspan="3" class="text-end">Total:</th>
-                        <th id="totalOriginal">0</th>
-                        <th id="totalRevisi">0</th>
-                        <th id="totalSelisih">0</th>
+                        @foreach($rekap->first() as $data)
+                            <th id="totalPagu{{ $data->tahapan_id }}-{{ $data->tanggal_upload }}-{{ $data->jam_upload }}">
+                                {{ number_format($totalPagu[$data->tahapan_id . '_' . str_replace('-', '_', $data->tanggal_upload) . '_' . str_replace(':', '_', $data->jam_upload)], 2, ',', '.') }}
+                            </th>
+                        @endforeach
+                        <th id="totalSelisihPagu">{{ number_format($totalSelisihPagu, 2, ',', '.') }}</th>
+                        <th id="totalPersentaseSelisihPagu">{{ number_format($totalPersentaseSelisihPagu, 2, ',', '.') }}%</th>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        <div class="total-container">
-            Total Pagu Original: <strong id="totalOriginalFooter">0</strong> |
-            Total Pagu Revisi: <strong id="totalRevisiFooter">0</strong> |
-            Total Selisih: <strong id="totalSelisihFooter">0</strong>
-        </div>
+       
 
-        <a href="{{ url('/import') }}" class="btn btn-secondary mt-3">Kembali ke Upload</a>
     </div>
 </div>
 
@@ -121,7 +132,7 @@
 <script>
     $(document).ready(function() {
         var table = $('#rekapTable').DataTable({
-            paging: false, // Pagination Dinonaktifkan
+            paging: false,
             searching: true,
             ordering: true,
             info: true,
@@ -164,11 +175,14 @@
                                 row[0].text = index; // Tambahkan nomor urut di PDF
                             }
                         });
+                        var totalPagu = 0;
+                        $('#rekapTable tbody tr').each(function() {
+                            var totalPaguRow = parseFloat($(this).find('.total-pagu').text().replace(/\./g, '').replace(',', '.')) || 0;
+                            totalPagu += totalPaguRow;
+                        });
                         doc.content[1].table.body.push([
                             { text: "Total", bold: true, alignment: "right", colSpan: 3 }, {}, {}, 
-                            { text: $('#totalOriginal').text(), bold: true },
-                            { text: $('#totalRevisi').text(), bold: true },
-                            { text: $('#totalSelisih').text(), bold: true }
+                            { text: totalPagu.toLocaleString('id-ID'), bold: true }
                         ]);
                     }
                 }
@@ -184,32 +198,10 @@
                     previous: "Sebelumnya"
                 }
             },
-            initComplete: function() {
-                updateTotal();
-            },
-            drawCallback: function() {
-                updateTotal();
+            drawCallback: function(settings) {
                 table.column(0).nodes().each(function(cell, i) { cell.innerHTML = i + 1; }); // Tambahkan nomor urut
             }
         });
-
-        function updateTotal() {
-            var totalOriginal = 0, totalRevisi = 0, totalSelisih = 0;
-
-            $('#rekapTable tbody tr').each(function() {
-                var paguOriginal = parseFloat($(this).find('.pagu-original').text().replace(/\./g, '').replace(',', '.')) || 0;
-                var paguRevisi = parseFloat($(this).find('.pagu-revisi').text().replace(/\./g, '').replace(',', '.')) || 0;
-                var paguSelisih = parseFloat($(this).find('.pagu-selisih').text().replace(/\./g, '').replace(',', '.')) || 0;
-
-                totalOriginal += paguOriginal;
-                totalRevisi += paguRevisi;
-                totalSelisih += paguSelisih;
-            });
-
-            $('#totalOriginal, #totalOriginalFooter').text(totalOriginal.toLocaleString('id-ID'));
-            $('#totalRevisi, #totalRevisiFooter').text(totalRevisi.toLocaleString('id-ID'));
-            $('#totalSelisih, #totalSelisihFooter').text(totalSelisih.toLocaleString('id-ID'));
-        }
     });
 </script>
 
