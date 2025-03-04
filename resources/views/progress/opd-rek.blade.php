@@ -163,7 +163,21 @@
             $('#total-selisih').text(formatNumber(totalSelisih));
         }
 
-        $(document).ready(function() { hitungTotal(); });
+        $(document).ready(function() { hitungTotal(); 
+
+// Initialize DataTables with export buttons
+            $('#rekapTable').DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        text: 'Export to Excel',
+                        className: 'btn btn-success'
+                    }
+                ]
+            });
+
+});
     </script>
 
 @endsection
