@@ -67,28 +67,6 @@
             </div>
             <div class="col-12 col-md-6">
                 <div class="h-100 d-flex flex-column justify-content-center align-items-center" style="min-height: 300px; max-height: 80vh;">
-                    <div class="card shadow-sm border-0 w-100 mb-3 p-3" style="background: linear-gradient(90deg, #007bff 0%, #00c6ff 100%); color: #fff;">
-                        <div class="row g-2 align-items-center">
-                            <div class="col-12 text-center mb-2" style="font-size: 1.1rem; letter-spacing: 1px;">
-                                Total Pagu OPD
-                            </div>
-                            <div class="col-6 text-center">
-                                <div style="font-size: 1.1rem;">Pagu Saat Ini</div>
-                                <div style="font-size: 2.1rem; font-weight: bold; line-height: 1;">
-                                    {{ $rekap->sum('total_pagu') ? number_format($rekap->sum('total_pagu'), 2, ',', '.') : '0,00' }}
-                                </div>
-                            </div>
-                            <div class="col-6 text-center border-start">
-                                <div style="font-size: 1.1rem;">Pagu Perubahan</div>
-                                <div style="font-size: 2.1rem; font-weight: bold; line-height: 1; opacity:0.5;">
-                                    -
-                                </div>
-                            </div>
-                            <div class="col-12 text-center mt-2" style="font-size: 1rem; opacity: 0.85;">
-                                {{ $skpdTerpilih ? ($skpdTerpilih->kode_skpd . ' - ' . $skpdTerpilih->nama_skpd) : '-' }}
-                            </div>
-                        </div>
-                    </div>
                     <div class="w-100 text-center mt-3">
                         <h5 class="text-muted">Rekap/Analisis Perubahan Anggaran</h5>
                         <p class="text-muted">(Kolom ini akan diisi fitur rekap/analisis selanjutnya)</p>
