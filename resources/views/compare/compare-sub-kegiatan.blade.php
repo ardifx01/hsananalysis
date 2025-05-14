@@ -55,9 +55,12 @@
         margin-right: 5px;
     }
 </style>
-
+<div class="card" data-aos="fade-up" data-aos-delay="800">
+ <div class="card-body">
 <!-- Form Filter Berdasarkan OPD -->
 <form action="{{ route('compare.sub-kegiatan') }}" method="GET" class="mb-3">
+<div class="row">
+<div class="col-md-12">
     <label for="kode_opd">Pilih OPD:</label>
     <select name="kode_opd" id="kode_opd" class="form-select">
         <option value="">Semua OPD</option>
@@ -67,6 +70,32 @@
             </option>
         @endforeach
     </select>
+    </div>
+    </div>
+    <div class="row">
+    <div class="col-md-6">
+    <label for="data1">Pilih Tahapan 1:</label>
+    <select name="data1" id="data1" class="form-select">
+        <option value="">Pilih tahapan</option>
+        @foreach($data1 as $tahapan1)
+            <option value="{{ $tahapan1->id }}" {{ request('data1') == $tahapan1->id ? 'selected' : '' }}>
+                {{ $tahapan1->id }} - {{ $tahapan1->name }}
+            </option>
+        @endforeach
+    </select>
+    </div>
+     <div class="col-md-6">
+    <label for="data1">Pilih Tahapan 2:</label>
+     <select name="data2" id="data2" class="form-select">
+        <option value="">Pilih tahapan</option>
+        @foreach($data2 as $tahapan2)
+            <option value="{{ $tahapan2->id }}" {{ request('data2') == $tahapan2->id ? 'selected' : '' }}>
+                {{ $tahapan2->id }} - {{ $tahapan2->name }}
+            </option>
+        @endforeach
+    </select>
+    </div>
+    </div>
     <button type="submit" class="btn btn-primary mt-2">Filter</button>
 </form>
 
@@ -76,10 +105,23 @@
             <tr>
                 <th class="text-center">No</th>
                 <th>Nama OPD</th>
+                <th>Sub Unit</th>
                 <th>Kode Sub Kegiatan</th>
                 <th>Nama Sub Kegiatan</th>
-                <th class="text-end">Pagu Murni</th>
-                <th class="text-end">Pagu Perubahan</th>
+                <th class="text-end">
+               
+        {{ $data1->firstWhere('id', request('data1'))->name ?? 'N/A' }}
+       
+           
+       
+        </th>
+                <th class="text-end">
+               
+          
+              {{ $data2->firstWhere('id', request('data2'))->name ?? 'N/A' }}
+           
+      
+        </th>
                 <th class="text-end">Selisih</th>
                 <th class="text-end">Persentase (%)</th>
             </tr>
@@ -89,6 +131,7 @@
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
                 <td>{{ $row->nama_opd }}</td>
+                <td>{{ $row->nama_sub_unit }}</td>
                 <td>{{ $row->kode_sub_kegiatan }}</td>
                 <td>{{ $row->nama_sub_kegiatan }}</td>
                 <td class="text-end pagu-original">{{ number_format($row->pagu_original, 2, ',', '.') }}</td>
@@ -100,7 +143,7 @@
         </tbody>
         <tfoot class="table-dark">
             <tr>
-                <th colspan="4" class="text-end">Total:</th>
+                <th colspan="5" class="text-end">Total:</th>
                 <th class="text-end" id="totalPaguOriginal">0</th>
                 <th class="text-end" id="totalPaguRevisi">0</th>
                 <th class="text-end" id="totalSelisih">0</th>
@@ -117,6 +160,8 @@
     <span>Persentase Selisih: <strong id="totalPersentaseFooter">0%</strong></span>
 </div>
 
+</div>
+</div>
 
 
 <script>

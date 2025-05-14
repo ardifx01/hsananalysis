@@ -31,6 +31,8 @@ class DataAnggaranImport implements ToModel, WithHeadingRow
         return new DataAnggaran([
             'kode_skpd' => $row['kode_skpd'],
             'nama_skpd' => $row['nama_skpd'],
+            'kode_sub_unit' => $row['kode_sub_unit'],
+            'nama_sub_unit' => $row['nama_sub_unit'],
             'kode_sub_kegiatan' => $row['kode_sub_kegiatan'],
             'nama_sub_kegiatan' => $row['nama_sub_kegiatan'],
             'kode_rekening' => $row['kode_rekening'],

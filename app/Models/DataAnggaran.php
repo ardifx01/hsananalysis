@@ -13,6 +13,8 @@ class DataAnggaran extends Model
     protected $fillable = [
         'kode_skpd',
         'nama_skpd',
+        'kode_sub_unit',
+        'nama_sub_unit',
         'kode_sub_kegiatan',
         'nama_sub_kegiatan',
         'kode_rekening',

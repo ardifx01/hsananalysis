@@ -17,11 +17,11 @@ class CompareController extends Controller
             'kode_skpd', 
             'nama_skpd', 
             'tahapan_id', 
-            DB::raw('DATE(tanggal_upload) as tanggal_upload'), 
-            DB::raw('TIME(tanggal_upload) as jam_upload'), 
+            // DB::raw('DATE(tanggal_upload) as tanggal_upload'), 
+            // DB::raw('TIME(tanggal_upload) as jam_upload'), 
             DB::raw('SUM(pagu) as total_pagu')
         )
-        ->groupBy('kode_skpd', 'nama_skpd', 'tahapan_id', 'tanggal_upload', 'jam_upload')
+        ->groupBy('kode_skpd', 'nama_skpd', 'tahapan_id')
         ->get()
         ->groupBy('kode_skpd');
 
@@ -234,42 +234,67 @@ public function compareDataOpdRek(Request $request)
     }
 
 
-public function comparePerSubKegiatan(Request $request)
+    public function comparePerSubKegiatan(Request $request)
     {
-        // Ambil daftar OPD untuk dropdown, diurutkan berdasarkan kode OPD
-        $opds = DataAnggaran::select('kode_skpd', 'nama_skpd')
-            ->distinct()
-            ->orderBy('kode_skpd') // Urutkan berdasarkan kode OPD
-            ->get();
-
-        // Ambil filter OPD dari request
+        $opds = DataAnggaran::select('kode_skpd', 'nama_skpd')->distinct()->orderBy('kode_skpd')->get();
+    
         $kodeOpd = $request->input('kode_opd');
-
-        // Query data berdasarkan kode sub kegiatan
-        $query = DataAnggaran::select(
+        $tahapan1 = $request->input('data1') ?? 1;
+        $tahapan2 = $request->input('data2') ?? 1;
+    
+        $data1 = Tahapan::select('id', 'name')->distinct()->orderBy('id')->get();
+        $data2 = Tahapan::select('id', 'name')->distinct()->orderBy('id')->get();
+    
+        // Query utama: ambil semua data dari kedua tahapan (yang match by kode_sub_kegiatan + kode_skpd)
+        $baseQuery = DataAnggaran::select(
             'kode_sub_kegiatan',
             'nama_sub_kegiatan',
+            'nama_sub_unit',
             'kode_skpd as kode_opd',
             'nama_skpd as nama_opd',
-            DB::raw('SUM(CASE WHEN tahapan_id = 1 THEN pagu ELSE 0 END) as pagu_original'),
-            DB::raw('SUM(CASE WHEN tahapan_id = 2 THEN pagu ELSE 0 END) as pagu_revisi')
+            DB::raw('SUM(CASE WHEN tahapan_id = ' . $tahapan1 . ' THEN pagu ELSE 0 END) as pagu_original'),
+            DB::raw('SUM(CASE WHEN tahapan_id = ' . $tahapan2 . ' THEN pagu ELSE 0 END) as pagu_revisi')
         )
-        ->groupBy('kode_sub_kegiatan', 'nama_sub_kegiatan', 'kode_skpd', 'nama_skpd')
-        ->orderBy('kode_sub_kegiatan'); // Urutkan hasil berdasarkan kode sub kegiatan
-
-        // Jika ada filter OPD, tambahkan kondisi
+        ->groupBy('kode_sub_kegiatan', 'nama_sub_kegiatan', 'kode_sub_unit', 'nama_sub_unit','kode_skpd', 'nama_skpd')
+        ->orderBy('kode_sub_unit', 'asc')
+        ->orderBy('kode_sub_kegiatan', 'asc');
+    
         if (!empty($kodeOpd)) {
-            $query->where('kode_skpd', $kodeOpd);
+            $baseQuery->where('kode_skpd', $kodeOpd);
         }
-
-        $rekap = $query->get();
-
+    
+        // Subquery: ambil semua kode_sub_kegiatan yang ada di tahapan1
+        $subQueryTahapan1 = DataAnggaran::where('tahapan_id', $tahapan1)
+            ->select(DB::raw('DISTINCT kode_sub_kegiatan'));
+    
+        // Query tambahan: ambil kegiatan baru yang hanya ada di tahapan2
+        $newDataQuery = DataAnggaran::select(
+            'kode_sub_kegiatan',
+            'nama_sub_kegiatan',
+            'nama_sub_unit',
+            'kode_skpd as kode_opd',
+            'nama_skpd as nama_opd',
+            DB::raw('0 as pagu_original'),
+            DB::raw('SUM(pagu) as pagu_revisi')
+        )
+        ->where('tahapan_id', $tahapan2)
+        ->whereNotIn('kode_sub_kegiatan', $subQueryTahapan1)
+        ->groupBy('kode_sub_kegiatan', 'nama_sub_kegiatan', 'kode_sub_unit', 'nama_sub_unit','kode_skpd', 'nama_skpd');
+    
+        if (!empty($kodeOpd)) {
+            $newDataQuery->where('kode_skpd', $kodeOpd);
+        }
+    
+        // Gabungkan kedua query
+        $rekap = $baseQuery->union($newDataQuery)->get();
+    
         // Hitung selisih dan persentase perubahan
         foreach ($rekap as $item) {
             $item->selisih = $item->pagu_revisi - $item->pagu_original;
-            $item->persentase = $item->pagu_original > 0 ? ($item->selisih / $item->pagu_original) * 100 : 0;
+            $item->persentase = $item->pagu_original > 0 ? ($item->selisih / $item->pagu_original) * 100 : 100;
         }
-
-        return view('compare.compare-sub-kegiatan', compact('rekap', 'opds'));
+    
+        return view('compare.compare-sub-kegiatan', compact('rekap', 'opds', 'data1','data2', 'tahapan1', 'tahapan2'));
     }
+    
 }

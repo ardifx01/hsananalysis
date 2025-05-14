@@ -30,6 +30,8 @@ Route::get('/compare-opd', [CompareController::class, 'compareOpd'])->name('comp
 Route::get('/compare/rek', [CompareController::class, 'compareDataRek'])->name('compare-rek');
 Route::get('/compare/opd-rek', [CompareController::class, 'compareDataOpdRek'])->name('compareDataOpdRek');
 
+Route::get('/compare/sub-kegiatan', [CompareController::class, 'comparePerSubKegiatan'])->name('compare.sub-kegiatan');
+
 
 
 //kertas kerja
@@ -57,7 +59,7 @@ Route::get('/progress/opd-rek', [ProgressController::class, 'progressPerOpdRek']
 
 // Group middleware untuk memastikan hanya user yang terdaftar bisa mengakses fitur lainnya
 
-Route::get('/compare/sub-kegiatan', [CompareController::class, 'comparePerSubKegiatan'])->name('compare.sub-kegiatan');
+
     // SETINGAN AWAL PERSENTASE SIMULASI PENYESUAIAN
     
 

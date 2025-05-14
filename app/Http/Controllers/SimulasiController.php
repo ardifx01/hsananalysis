@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use App\Models\RekeningPenyesuaian;
 use App\Models\DataAnggaran;
+use Illuminate\Http\Request;
+use App\Exports\RekapPerOpdExport;
 use Illuminate\Support\Facades\DB;
+use App\Models\RekeningPenyesuaian;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Models\OpdRekeningPenyesuaian;
 
 
@@ -565,7 +567,7 @@ public function getSubkegByOpd(Request $request)
     // Ambil daftar sub kegiatan berdasarkan OPD
     $subkegiatan = DataAnggaran::where('kode_skpd', $kodeOpd)
         ->where('tipe_data', 'original')
-        ->select('kode_sub_kegiatan', 'nama_sub_kegiatan', \DB::raw('SUM(pagu) as pagu_murni'))
+        ->select('kode_sub_kegiatan', 'nama_sub_kegiatan', DB::raw('SUM(pagu) as pagu_murni'))
         ->groupBy('kode_sub_kegiatan', 'nama_sub_kegiatan')
         ->orderBy('kode_sub_kegiatan')
         ->get();
@@ -581,7 +583,7 @@ public function getSubkegByOpd(Request $request)
 
     
     // Ambil persentase penyesuaian dari tabel 'opd_skr_penyesuaian'
-    $penyesuaian = \DB::table('opd_skr_penyesuaian')
+    $penyesuaian = DB::table('opd_skr_penyesuaian')
     ->where('kode_opd', $kodeOpd)
     ->select('kode_sub_kegiatan', 'kode_rekening', 'persentase')
     ->get();
@@ -696,5 +698,21 @@ public function updatePersentaseSubkeg(Request $request)
     }
 }
 
+
+//SET PAGU PER OPD
+public function set_pagu_opd()
+    {
+        // Ambil semua kode rekening yang ada di data_anggarans
+        $data = DB::table('data_anggarans')
+            ->select('data_anggarans.kode_skpd', 'data_anggarans.nama_skpd', 
+                DB::raw('COALESCE(paguopd.nilai, 0) as paguopdbaru')
+            )
+            ->leftJoin('rekening_penyesuaian', 'data_anggarans.kode_rekening', '=', 'rekening_penyesuaian.kode_rekening')
+            ->groupBy('data_anggarans.kode_rekening', 'data_anggarans.nama_rekening', 'rekening_penyesuaian.persentase_penyesuaian')
+            ->orderBy('data_anggarans.kode_rekening', 'asc')
+            ->get();
+
+        return view('simulasi.set-rek', compact('data'));
+    }
 
 }
