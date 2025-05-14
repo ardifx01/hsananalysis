@@ -7,6 +7,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SimulasiController;
 use App\Http\Controllers\RekapPerOpdController;
 use App\Http\Controllers\CompareController;
+use App\Http\Controllers\KodeRekeningController;
 
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\TahapanController;
@@ -24,6 +25,11 @@ Route::resource('data-anggaran', DataAnggaranController::class);
 Route::delete('data-anggaran/{tahapan_id}/{tanggal_upload}/{jam_upload}', [DataAnggaranController::class, 'destroy'])->name('data-anggaran.destroy');
 Route::get('/data-anggaran', [DataAnggaranController::class, 'index'])->name('data');
 Route::post('/data-anggaran/upload', [DataAnggaranController::class, 'upload'])->name('data-anggaran.upload');   
+
+//Kode Rekening
+Route::resource('kode-rekening', KodeRekeningController::class);
+Route::post('/kode-rekening/import', [KodeRekeningController::class, 'import'])->name('kode-rekening.import');
+Route::get('/kode-rekening/template/download', [KodeRekeningController::class, 'downloadTemplate'])->name('kode-rekening.template.download');
 
 // compare data
 Route::get('/compare-opd', [CompareController::class, 'compareOpd'])->name('compare-opd');
@@ -128,6 +134,9 @@ Route::get('/progress/opd-rek', [ProgressController::class, 'progressPerOpdRek']
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Simulasi Perubahan Anggaran
+    Route::get('/simulasi-perubahan', [App\Http\Controllers\SimulasiPerubahanController::class, 'index'])->name('simulasi-perubahan.index');
 });
 
 // ROUTE AUTENTIKASI

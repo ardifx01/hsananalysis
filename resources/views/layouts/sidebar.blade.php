@@ -34,7 +34,7 @@
             </i>
         </div>
     </div>
-    <div class="sidebar-body pt-0 data-scrollbar">
+    <div class="pt-0 sidebar-body data-scrollbar">
         <div class="sidebar-list">
             <!-- Sidebar Menu Start -->
             <ul class="navbar-nav iq-main-menu" id="sidebar-menu">
@@ -120,6 +120,21 @@
                                 </i>
                                 <i class="sidenav-mini-icon"> K </i>
                                 <span class="item-name">Data Anggaran</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('kode-rekening.index') ? 'active' : '' }}"
+                                href="{{ route('kode-rekening.index') }}">
+                                <i class="icon">
+                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
+                                        viewBox="0 0 24 24" fill="currentColor">
+                                        <path
+                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
+                                    </svg>
+                                </i>
+                                <i class="sidenav-mini-icon"> K </i>
+                                <span class="item-name">Kode Rekening</span>
                             </a>
                         </li>
 
@@ -310,6 +325,21 @@
                                 </i>
                                 <i class="sidenav-mini-icon"> K </i>
                                 <span class="item-name">Set Rek PD</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('simulasi-perubahan.index') ? 'active' : '' }}"
+                                href="{{ route('simulasi-perubahan.index') }}">
+                                <i class="icon">
+                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
+                                        viewBox="0 0 24 24" fill="currentColor">
+                                        <path
+                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
+                                    </svg>
+                                </i>
+                                <i class="sidenav-mini-icon"> P </i>
+                                <span class="item-name">Simulasi Perubahan</span>
                             </a>
                         </li>
 

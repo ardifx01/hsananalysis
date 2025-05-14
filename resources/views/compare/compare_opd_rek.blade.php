@@ -61,23 +61,24 @@
 </style>
 
 <!-- DataTables CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css">
 
 <div class="card" data-aos="fade-up" data-aos-delay="800">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h4>Perbandingan Belanja Rekening per SKPD</h4>
-        <form method="GET" action="{{ route('compareDataOpdRek') }}">
-            <select name="kode_skpd" onchange="this.form.submit()">
-                <option value="">Pilih SKPD</option>
-                @foreach($skpds as $skpd)
-                    <option value="{{ $skpd->kode_skpd }}" {{ $kodeSkpd == $skpd->kode_skpd ? 'selected' : '' }}>
-                        {{ $skpd->nama_skpd }}
-                    </option>
-                @endforeach
-            </select>
-        </form>
-        <div class="dt-buttons"></div>
+        <div>
+            <form method="GET" action="{{ route('compareDataOpdRek') }}">
+                <select name="kode_skpd" onchange="this.form.submit()">
+                    <option value="">Pilih SKPD</option>
+                    @foreach($skpds as $skpd)
+                        <option value="{{ $skpd->kode_skpd }}" {{ $kodeSkpd == $skpd->kode_skpd ? 'selected' : '' }}>
+                            {{ $skpd->nama_skpd }}
+                        </option>
+                    @endforeach
+                </select>
+            </form>
+        </div>
     </div>
 
     <div class="card-body">
@@ -89,8 +90,12 @@
                         <th  style="text-align: center;">No</th> <!-- Kolom Nomor Urut -->
                         <th  style="text-align: center;">Kode Rekening</th>
                         <th class="nama-rekening" style="text-align: center;">Nama Rekening</th>
+                        @php
+                            $headerCount = 0; // To track column count
+                        @endphp
                         @foreach($rekap->first() as $data)
                             <th style="text-align: center;">{{ optional($tahapans->find($data->tahapan_id))->name }}<br><span style="font-size:10px">{{ $data->tanggal_upload }}<br>{{ $data->jam_upload }}</span></th>
+                            @php $headerCount++; @endphp
                         @endforeach
                         <th  style="text-align: center;">Selisih</th>
                         <th  style="text-align: center;">Persentase Selisih</th>
@@ -102,11 +107,24 @@
                         <td>{{ $loop->iteration }}</td> <!-- Nomor Urut Manual -->
                         <td>{{ $kode_rekening }}</td>
                         <td class="nama-rekening">{{ $data->first()->nama_rekening }}</td>
+                        @php
+                            $itemCount = 0; // To ensure column count matches header
+                        @endphp
                         @foreach($data as $item)
                             <td class="total-pagu-{{ $item->tahapan_id }}-{{ $item->tanggal_upload }}-{{ $item->jam_upload }}">
                                 {{ number_format($item->total_pagu, 2, ',', '.') }}
                             </td>
+                            @php $itemCount++; @endphp
                         @endforeach
+                        
+                        @php
+                            // Add empty cells if needed to match header count
+                            while($itemCount < $headerCount) {
+                                echo '<td></td>';
+                                $itemCount++;
+                            }
+                        @endphp
+                        
                         <td class="selisih-pagu">{{ number_format($selisihPagu[$kode_rekening], 2, ',', '.') }}</td>
                         <td class="persentase-selisih-pagu">{{ number_format($persentaseSelisihPagu[$kode_rekening], 2, ',', '.') }}%</td>
                     </tr>
@@ -115,11 +133,24 @@
                 <tfoot>
                     <tr class="table-dark">
                         <th colspan="3" class="text-end">Total:</th>
+                        @php 
+                            $footerCount = 0;
+                        @endphp
                         @foreach($rekap->first() as $data)
                             <th id="totalPagu{{ $data->tahapan_id }}-{{ $data->tanggal_upload }}-{{ $data->jam_upload }}">
                                 {{ number_format($totalPagu[$data->tahapan_id . '_' . str_replace('-', '_', $data->tanggal_upload) . '_' . str_replace(':', '_', $data->jam_upload)], 2, ',', '.') }}
                             </th>
+                            @php $footerCount++; @endphp
                         @endforeach
+                        
+                        @php
+                            // Add empty cells if needed to match header count
+                            while($footerCount < $headerCount) {
+                                echo '<th></th>';
+                                $footerCount++;
+                            }
+                        @endphp
+                        
                         <th id="totalSelisihPagu">{{ number_format($totalSelisihPagu, 2, ',', '.') }}</th>
                         <th id="totalPersentaseSelisihPagu">{{ number_format($totalPersentaseSelisihPagu, 2, ',', '.') }}%</th>
                     </tr>
@@ -134,85 +165,54 @@
 
 <!-- jQuery dan DataTables JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
 
 <script>
     $(document).ready(function() {
-        var table = $('#rekapTable').DataTable({
+        // Basic initialization first, then add features
+        var dataTable = $('#rekapTable').DataTable({
             paging: false,
             searching: true,
-            ordering: true,
             info: true,
-            columnDefs: [
-                { targets: 0, searchable: false, orderable: false }, // Kolom Nomor Urut
-            ],
             order: [[1, 'asc']],
-            dom: 'Blfrtip',
+            columnDefs: [
+                { orderable: false, targets: 0 }
+            ],
+            dom: 'Bfrtip',
             buttons: [
                 {
-                    extend: 'excelHtml5',
-                    text: '📊 Download Excel',
-                    className: 'btn btn-success',
-                    footer: true,
+                    extend: 'excel',
+                    text: '📊 Export Excel',
+                    title: 'Perbandingan Belanja Rekening per SKPD',
                     exportOptions: {
-                        columns: ':visible',
-                        modifier: { search: 'applied' },
-                        format: {
-                            body: function(data, row, column, node) {
-                                if (column === 0) return row + 1; // Nomor urut saat export
-                                return data.replace(/\./g, '').replace(',', '.');
-                            }
-                        }
+                        columns: ':visible'
                     }
                 },
                 {
-                    extend: 'pdfHtml5',
-                    text: '📄 Download PDF',
-                    className: 'btn btn-danger',
+                    extend: 'pdf',
+                    text: '📄 Export PDF',
+                    title: 'Perbandingan Belanja Rekening per SKPD',
                     orientation: 'landscape',
                     pageSize: 'A4',
-                    footer: true,
                     exportOptions: {
-                        columns: ':visible',
-                        modifier: { search: 'applied' }
-                    },
-                    customize: function(doc) {
-                        doc.content[1].table.body.forEach(function(row, index) {
-                            if (index > 0) {
-                                row[0].text = index; // Tambahkan nomor urut di PDF
-                            }
-                        });
-                        var totalPagu = 0;
-                        $('#rekapTable tbody tr').each(function() {
-                            var totalPaguRow = parseFloat($(this).find('.total-pagu').text().replace(/\./g, '').replace(',', '.')) || 0;
-                            totalPagu += totalPaguRow;
-                        });
-                        doc.content[1].table.body.push([
-                            { text: "Total", bold: true, alignment: "right", colSpan: 3 }, {}, {}, 
-                            { text: totalPagu.toLocaleString('id-ID'), bold: true }
-                        ]);
+                        columns: ':visible'
                     }
                 }
-            ],
-            language: {
-                search: "Cari Data:",
-                lengthMenu: "Tampilkan _MENU_ data per halaman",
-                info: "Menampilkan _TOTAL_ data",
-                paginate: {
-                    first: "Awal",
-                    last: "Akhir",
-                    next: "Berikutnya",
-                    previous: "Sebelumnya"
-                }
-            },
-            drawCallback: function(settings) {
-                table.column(0).nodes().each(function(cell, i) { cell.innerHTML = i + 1; }); // Tambahkan nomor urut
-            }
+            ]
         });
+        
+        // Update row numbers manually
+        dataTable.on('order.dt search.dt', function() {
+            dataTable.column(0, {search:'applied', order:'applied'}).nodes().each(function(cell, i) {
+                cell.innerHTML = i + 1;
+            });
+        }).draw();
     });
 </script>
 

@@ -170,6 +170,7 @@ public function compareDataOpdRek(Request $request)
             DB::raw('SUM(pagu) as total_pagu')
         )
         ->groupBy('kode_skpd', 'nama_skpd', 'kode_rekening', 'nama_rekening', 'tahapan_id', 'tanggal_upload', 'jam_upload')
+        ->orderBy('kode_rekening')
         ->orderBy('tahapan_id')
         ->orderBy('tanggal_upload')
         ->orderBy('jam_upload');
