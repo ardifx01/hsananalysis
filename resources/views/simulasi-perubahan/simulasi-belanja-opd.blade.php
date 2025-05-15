@@ -137,6 +137,11 @@ function exportToPDF() {
         }
     });
 
+    // Get the total row data from the table
+    var totalRow = $('#rekapTable tfoot tr').find('td').map(function() {
+        return $(this).text();
+    }).get();
+
     // Create PDF document
     var docDefinition = {
         pageOrientation: 'landscape',
@@ -176,9 +181,9 @@ function exportToPDF() {
                             { text: '', colSpan: 3, style: 'tableFooter' },
                             {},
                             {},
-                            { text: data.footer[0][3], alignment: 'right', style: 'tableFooter' },
-                            { text: data.footer[0][4], alignment: 'right', style: 'tableFooter' },
-                            { text: data.footer[0][5], alignment: 'right', style: 'tableFooter' }
+                            { text: totalRow[3], alignment: 'right', style: 'tableFooter' },
+                            { text: totalRow[4], alignment: 'right', style: 'tableFooter' },
+                            { text: totalRow[5], alignment: 'right', style: 'tableFooter' }
                         ]
                     ]
                 },
