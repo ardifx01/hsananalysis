@@ -68,4 +68,46 @@ class SimulasiPerubahanController extends Controller
             'simulasiPenyesuaian' => $simulasiPenyesuaian,
         ]);
     }
+
+    public function simulasiBelanjaOpd(Request $request)
+    {
+        $tahapans = Tahapan::all();
+        $tahapanId = $request->input('tahapan_id');
+
+        // Ambil rekap pagu per OPD
+        $rekapOpd = collect();
+        $simulasiPenyesuaian = collect();
+        if ($tahapanId) {
+            $rekapOpd = DataAnggaran::select('kode_skpd', 'nama_skpd')
+                ->selectRaw('SUM(pagu) as total_pagu')
+                ->where('tahapan_id', $tahapanId)
+                ->groupBy('kode_skpd', 'nama_skpd')
+                ->orderBy('kode_skpd')
+                ->get();
+
+            // Ambil semua penyesuaian untuk seluruh OPD
+            $simulasiPenyesuaian = SimulasiPenyesuaianAnggaran::all();
+
+            // Tambahkan kolom total_pagu_setelah_penyesuaian ke setiap OPD
+            foreach ($rekapOpd as $opd) {
+                $penyesuaian = $simulasiPenyesuaian->where('kode_opd', $opd->kode_skpd);
+                $totalPenyesuaian = 0;
+                foreach ($penyesuaian as $adj) {
+                    if ($adj->operasi == '+') {
+                        $totalPenyesuaian += $adj->nilai;
+                    } elseif ($adj->operasi == '-') {
+                        $totalPenyesuaian -= $adj->nilai;
+                    }
+                }
+                $opd->total_pagu_setelah_penyesuaian = $opd->total_pagu + $totalPenyesuaian;
+                $opd->total_penyesuaian = $totalPenyesuaian;
+            }
+        }
+
+        return view('simulasi-perubahan.simulasi-belanja-opd', [
+            'tahapans' => $tahapans,
+            'tahapanId' => $tahapanId,
+            'rekapOpd' => $rekapOpd,
+        ]);
+    }
 }

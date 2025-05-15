@@ -42,9 +42,11 @@
                         <strong>SKPD:</strong> {{ $skpdTerpilih ? ($skpdTerpilih->kode_skpd . ' - ' . $skpdTerpilih->nama_skpd) : '-' }}<br>
                         <strong>Tahapan:</strong> {{ $tahapanTerpilih ? $tahapanTerpilih->name : '-' }}
                     </div>
+
+                   
                     
                     <div class="table-responsive" style="max-height: 80vh; overflow-y: auto;">
-                        <h5 class="mb-2 text-primary">Rekap Data Anggaran</h5>
+                        <h5 class="mb-2 text-primary">Rekap Belanja OPD : {{ $skpdTerpilih ? ($skpdTerpilih->kode_skpd . ' - ' . $skpdTerpilih->nama_skpd) : '-' }}</h5>
                         <table class="table align-middle table-sm table-bordered table-striped table-hover" id="rekapTable">
                             <thead class="table-primary">
                                 <tr>
@@ -86,7 +88,9 @@
                             </tbody>
                             <tfoot>
                                 <tr class="table-secondary">
-                                    <th colspan="3" class="text-end">Total</th>
+                                    <th></th>
+                                    <th></th>
+                                    <th class="text-end">Total</th>
                                     <th class="text-end" style="font-size:12px;">
                                         {{ number_format($rekap->sum('total_pagu'), 2, ',', '.') }}
                                     </th>
@@ -135,9 +139,10 @@
                 <div class="col-12 col-md-6">
                     <div class="h-100 d-flex flex-column" style="min-height: 300px; max-height: 80vh;">
                         <div class="mb-2 text-center">
-                            <h5 class="mb-2 text-primary">Struktur Belanja OPD</h5>
+                            
                         </div>
                         <div class="table-responsive flex-grow-1" style="max-height: 70vh; overflow-y: auto;">
+                            <h5 class="mb-2 text-primary">Struktur Belanja OPD</h5>
                             <table class="table mb-0 align-middle table-sm table-bordered table-striped">
                                 <thead class="table-light">
                                     <tr>
@@ -194,7 +199,8 @@
                                 </tbody>
                                 <tfoot>
                                     <tr class="table-secondary">
-                                        <th colspan="2" class="text-end">Total</th>
+                                        <th></th>
+                                        <th></th>
                                         <th style="font-size:12px;" class="text-end">
                                             @php
                                                 $sumTotalPagu3Segmen = 0;
@@ -283,10 +289,12 @@
 
                         <div class="mb-4">
                             <div class="mb-2 d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0 text-primary">Data Simulasi Penyesuaian Anggaran</h5>
+                                
                                 <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#modalCreateSimulasi">+ Tambah</button>
                             </div>
+                           
                             <div class="table-responsive">
+                                <h5 class="mb-0 text-primary">Data Simulasi Penyesuaian Anggaran</h5>
                                 <table class="table mb-0 align-middle table-sm table-bordered table-striped" style="font-size:12px;">
                                     <thead class="table-light">
                                         <tr>
@@ -406,20 +414,20 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-2">
+          <div class="mb-3">
             <label for="kode_opd" class="form-label">Kode OPD</label>
             <input type="text" class="form-control form-control-sm" id="kode_opd" name="kode_opd" value="{{ $skpdKode }}" readonly>
           </div>
-          <div class="mb-2">
+          <div class="mb-3">
             <label for="kode_rekening" class="form-label">Kode Rekening</label>
-            <select class="form-select form-select-sm select2-rekening" id="kode_rekening" name="kode_rekening" required style="width:100%">
+            <select class="form-select form-select-sm select2-rekening" id="kode_rekening" name="kode_rekening" required>
               <option value="">Pilih Kode Rekening</option>
               @foreach($rekap as $item)
                 <option value="{{ $item->kode_rekening }}">{{ $item->kode_rekening }} - {{ $item->nama_rekening }}</option>
               @endforeach
             </select>
           </div>
-          <div class="mb-2">
+          <div class="mb-3">
             <label for="operasi" class="form-label">Operasi</label>
             <select class="form-select form-select-sm" id="operasi" name="operasi" required>
               <option value="">Pilih Operasi</option>
@@ -427,11 +435,11 @@
               <option value="-">-</option>
             </select>
           </div>
-          <div class="mb-2">
+          <div class="mb-3">
             <label for="nilai" class="form-label">Nilai</label>
             <input type="number" step="0.01" class="form-control form-control-sm" id="nilai" name="nilai" required>
           </div>
-          <div class="mb-2">
+          <div class="mb-3">
             <label for="keterangan" class="form-label">Keterangan</label>
             <textarea class="form-control form-control-sm" id="keterangan" name="keterangan" rows="3"></textarea>
           </div>
@@ -451,6 +459,9 @@
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <link href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" rel="stylesheet">
 <style>
+
+
+
     #rekapTable th, #rekapTable td,
     .table-sm th, .table-sm td,
     .dataTables_wrapper .dataTables_info,
@@ -524,6 +535,27 @@
             overflow: visible !important;
         }
     }
+
+    .select2-container {
+        z-index: 9999 !important;
+    }
+    .select2-dropdown {
+        z-index: 99999 !important;
+    }
+    .select2-container .select2-dropdown {
+        background-color: #fff !important;
+        color: #212529 !important;
+        border: 1px solid #ced4da !important;
+    }
+    .select2-container .select2-results__option {
+        color: #212529 !important;
+        background-color: #fff !important;
+    }
+    .select2-container .select2-results__option--highlighted {
+        background-color: #0d6efd !important;
+        color: #fff !important;
+    }
+    .modal { overflow: visible !important; }
 </style>
 @endpush
 
@@ -538,21 +570,22 @@
 <script>
     $(document).ready(function() {
         // DataTable initialization
-        $('#rekapTable').DataTable({
-            pageLength: 10,
-            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
-            order: [[1, 'asc']],
-            language: {
-                url: "//cdn.datatables.net/plug-ins/1.10.19/i18n/Indonesian.json"
-            }
-        });
+        // $('#rekapTable').DataTable({
+        //     pageLength: 10,
+        //     lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
+        //     order: [[1, 'asc']],
+        //     language: {
+        //         url: "//cdn.datatables.net/plug-ins/1.10.19/i18n/Indonesian.json"
+        //     }
+        // });
 
-        // Inisialisasi Select2 setiap kali modal dibuka
+        // Inisialisasi Select2 setiap kali modal tambah dibuka
         $('#modalCreateSimulasi').on('shown.bs.modal', function () {
-            if ($('.select2-rekening').hasClass('select2-hidden-accessible')) {
-                $('.select2-rekening').select2('destroy');
+            var $select = $(this).find('.select2-rekening');
+            if ($select.hasClass('select2-hidden-accessible')) {
+                $select.select2('destroy');
             }
-            $('.select2-rekening').select2({
+            $select.select2({
                 theme: 'bootstrap-5',
                 width: '100%',
                 dropdownParent: $('#modalCreateSimulasi'),
@@ -563,6 +596,24 @@
                         return "Data tidak ditemukan";
                     }
                 }
+            });
+            // Set background dan warna secara inline saat dropdown dibuka
+            $select.on('select2:open', function() {
+                setTimeout(function() {
+                    $('.select2-dropdown').css({
+                        'background-color': '#fff',
+                        'color': '#212529',
+                        'border': '1px solid #ced4da'
+                    });
+                    $('.select2-results__option').css({
+                        'color': '#212529',
+                        'background-color': '#fff'
+                    });
+                    $('.select2-results__option--highlighted').css({
+                        'background-color': '#fff',
+                        'color': '#fff'
+                    });
+                }, 0);
             });
         });
 
@@ -580,6 +631,14 @@
                     }
                 }
             });
+        });
+
+        // Destroy Select2 saat modal tambah ditutup
+        $('#modalCreateSimulasi').on('hidden.bs.modal', function () {
+            var $select = $(this).find('.select2-rekening');
+            if ($select.hasClass('select2-hidden-accessible')) {
+                $select.select2('destroy');
+            }
         });
     });
 
@@ -615,15 +674,15 @@
         for (let i = 0; i < tables.length; i++) {
             const table = tables[i];
 
-            // Ambil judul tabel jika ada (misal, h5/h4 sebelum tabel)
+            // Ambil judul tabel dari <h5> terdekat di atas <table> (abaikan komentar/whitespace)
             let title = '';
-            let prev = table.previousElementSibling;
+            let prev = table.previousSibling;
             while (prev) {
-                if (prev.tagName && /^H[1-6]$/.test(prev.tagName)) {
-                    title = prev.innerText;
+                if (prev.nodeType === 1 && prev.tagName && prev.tagName.toUpperCase() === 'H5') {
+                    title = prev.innerText.trim();
                     break;
                 }
-                prev = prev.previousElementSibling;
+                prev = prev.previousSibling;
             }
             if (!title) title = 'Tabel ' + (i + 1);
 
@@ -648,10 +707,13 @@
             if (tfoot) {
                 tfoot.querySelectorAll('tr').forEach(tr => {
                     const row = [];
-                    tr.querySelectorAll('th,td').forEach((cell, idx) => {
-                        row[idx] = cell.innerText.trim();
-                    });
-                    if (row.length) foot.push(row);
+                    // Pastikan jumlah kolom sama dengan header
+                    let colCount = headers.length;
+                    let cells = tr.querySelectorAll('th,td');
+                    for (let i = 0; i < colCount; i++) {
+                        row[i] = cells[i] ? cells[i].innerText.trim() : '';
+                    }
+                    foot.push(row);
                 });
             }
 
@@ -670,13 +732,15 @@
                 styles: { fontSize: 8, cellPadding: 2 },
                 headStyles: { fillColor: [41, 128, 185], textColor: 255 },
                 theme: 'grid',
-                showHead: 'firstPage', // Header hanya di halaman pertama
+                showHead: 'everyPage', // header tetap di setiap halaman
                 showFoot: 'lastPage',  // Footer hanya di halaman terakhir
                 didDrawPage: function (data) {
-                    // Judul hanya di halaman pertama tabel
-                    if (data.pageNumber === pdf.internal.getNumberOfPages() - (firstTable ? 0 : 1)) {
+                    if (data.pageNumber === 1) {
                         pdf.setFontSize(12);
                         pdf.text(title, margin, 18);
+                    } else {
+                        // Tambahkan margin atas pada halaman lanjutan
+                        data.settings.margin.top = 16; // margin atas 16mm di halaman lanjutan
                     }
                 }
             });
