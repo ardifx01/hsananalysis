@@ -25,9 +25,14 @@
     </div>
     <div class="card-body">
         <div class="mb-3">
-            <button class="btn btn-primary btn-sm" onclick="window.print()">
-                <i class="bi bi-printer"></i> Cetak Halaman
-            </button>
+            <div class="btn-group">
+                <button class="btn btn-primary btn-sm" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Cetak
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="exportToPDF()">
+                    <i class="bi bi-file-pdf"></i> Export PDF
+                </button>
+            </div>
         </div>
         <div id="print-area">
             <div class="row">
@@ -456,11 +461,38 @@
     .dataTables_wrapper .dataTables_paginate span {
         font-size: 10px !important;
     }
-    #rekapTable th, #rekapTable td,
-    .table-sm th, .table-sm td {
-        padding-top: 0.14rem !important;
-        padding-bottom: 0.14rem !important;
+
+    /* Table styles for better PDF export */
+    .table-responsive {
+        margin-bottom: 1rem;
     }
+    
+    .table {
+        width: 100% !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .table th,
+    .table td {
+        white-space: nowrap;
+        padding: 0.5rem !important;
+        border: 1px solid #dee2e6;
+    }
+    
+    .table thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .table tbody tr:nth-of-type(odd) {
+        background-color: rgba(0,0,0,.02);
+    }
+    
+    .table tfoot th {
+        background-color: #f8f9fa;
+        border-top: 2px solid #dee2e6;
+    }
+
     .nama-rekening-compact {
         font-size: 10px !important;
         max-width: 180px;
@@ -468,102 +500,26 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .table-sm th, .table-sm td {
-        vertical-align: middle;
-    }
     
-    /* Modal styling without backdrop */
-    .modal {
-        z-index: 2050 !important;
-    }
-    .modal-dialog {
-        z-index: 2051 !important;
-    }
-    .modal-content {
-        z-index: 2052 !important;
-        box-shadow: 0 0 20px rgba(0,0,0,0.2);
-    }
-    .card, .dataTables_wrapper {
-        z-index: 1 !important;
-        position: relative;
-    }
-
-    /* Autocomplete styling */
-    .ui-autocomplete {
-        max-height: 200px;
-        overflow-y: auto;
-        overflow-x: hidden;
-        z-index: 2100 !important;
-        font-size: 12px;
-        background-color: #fff;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .ui-autocomplete .ui-menu-item {
-        padding: 6px 12px;
-        cursor: pointer;
-        border-bottom: 1px solid #eee;
-    }
-    .ui-autocomplete .ui-menu-item:last-child {
-        border-bottom: none;
-    }
-    .ui-autocomplete .ui-menu-item div {
-        margin-bottom: 2px;
-    }
-    .ui-autocomplete .ui-menu-item .opd-info {
-        font-size: 11px;
-        color: #666;
-    }
-    .ui-autocomplete .ui-menu-item:hover {
-        background-color: #f8f9fa;
-    }
-    .ui-helper-hidden-accessible {
-        display: none;
-    }
-    .select2-container--bootstrap-5 .select2-selection {
-        min-height: 31px;
-        font-size: 12px;
-    }
-    .select2-container--bootstrap-5 .select2-selection--single {
-        padding-top: 2px;
-    }
-    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-        padding-left: 8px;
-    }
-    .select2-container--bootstrap-5 .select2-results__option {
-        font-size: 12px;
-    }
+    /* Print styles */
     @media print {
         body * {
             visibility: hidden !important;
         }
-        #print-area, #print-area table, #print-area thead, #print-area tbody, #print-area tfoot, #print-area tr, #print-area th, #print-area td, #print-area .print-title {
+        #print-area, #print-area * {
             visibility: visible !important;
         }
         #print-area {
             position: absolute;
             left: 0;
             top: 0;
-            width: 100vw;
-            background: #fff;
-            z-index: 9999;
+            width: 100%;
         }
-        #print-area *:not(table):not(thead):not(tbody):not(tfoot):not(tr):not(th):not(td):not(.print-title) {
-            display: none !important;
-        }
-        .btn, .card-header, .modal, .modal-backdrop, nav, aside, .navbar, .sidebar, .footer {
-            display: none !important;
-        }
-        table {
+        .table {
             page-break-inside: avoid;
-            margin-bottom: 24px;
         }
-        .print-title {
-            font-size: 1.1em;
-            font-weight: bold;
-            margin: 16px 0 8px 0;
-            text-align: left;
+        .table-responsive {
+            overflow: visible !important;
         }
     }
 </style>
@@ -574,6 +530,8 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
     $(document).ready(function() {
         // DataTable initialization
@@ -588,7 +546,6 @@
 
         // Inisialisasi Select2 setiap kali modal dibuka
         $('#modalCreateSimulasi').on('shown.bs.modal', function () {
-            // Destroy dulu jika sudah pernah diinisialisasi
             if ($('.select2-rekening').hasClass('select2-hidden-accessible')) {
                 $('.select2-rekening').select2('destroy');
             }
@@ -622,6 +579,86 @@
             });
         });
     });
+
+    // Fungsi untuk export ke PDF
+    function exportToPDF() {
+        // Sembunyikan elemen yang tidak perlu
+        const printArea = document.getElementById('print-area');
+        const originalDisplay = {};
+        const elementsToHide = printArea.querySelectorAll('.btn, .modal, .modal-backdrop, nav, aside, .navbar, .sidebar, .footer');
+        
+        elementsToHide.forEach(el => {
+            originalDisplay[el.id] = el.style.display;
+            el.style.display = 'none';
+        });
+
+        // Konfigurasi PDF
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 10;
+
+        // Fungsi untuk menambahkan tabel ke PDF
+        const addTableToPDF = async (tableElement, yPosition) => {
+            const canvas = await html2canvas(tableElement, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                windowWidth: tableElement.scrollWidth,
+                windowHeight: tableElement.scrollHeight
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = pageWidth - (2 * margin);
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            // Jika tabel terlalu panjang, buat halaman baru
+            if (yPosition + imgHeight > pageHeight - margin) {
+                pdf.addPage();
+                yPosition = margin;
+            }
+
+            pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
+            return yPosition + imgHeight + 10;
+        };
+
+        // Export setiap tabel
+        (async () => {
+            let yPosition = margin;
+            
+            // Tambahkan judul
+            pdf.setFontSize(14);
+            pdf.text('Simulasi Perubahan Anggaran', pageWidth/2, yPosition, { align: 'center' });
+            yPosition += 10;
+
+            // Tambahkan informasi SKPD dan Tahapan
+            pdf.setFontSize(10);
+            const skpdInfo = document.querySelector('#print-area .mb-2').textContent;
+            pdf.text(skpdInfo, margin, yPosition);
+            yPosition += 15;
+
+            // Export tabel rekap
+            const rekapTable = document.querySelector('#rekapTable').closest('.table-responsive');
+            yPosition = await addTableToPDF(rekapTable, yPosition);
+
+            // Export tabel struktur belanja
+            const strukturTable = document.querySelector('.col-md-6:last-child .table-responsive');
+            yPosition = await addTableToPDF(strukturTable, yPosition);
+
+            // Export tabel simulasi penyesuaian
+            const simulasiTable = document.querySelector('.col-12:last-child .table-responsive');
+            yPosition = await addTableToPDF(simulasiTable, yPosition);
+
+            // Simpan PDF
+            pdf.save('simulasi-perubahan-anggaran.pdf');
+
+            // Kembalikan tampilan elemen yang disembunyikan
+            elementsToHide.forEach(el => {
+                el.style.display = originalDisplay[el.id];
+            });
+        })();
+    }
 </script>
 @endpush
 @endsection 
