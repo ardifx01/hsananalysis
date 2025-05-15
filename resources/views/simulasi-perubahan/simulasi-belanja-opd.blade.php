@@ -97,64 +97,6 @@ $(document).ready(function() {
                         }
                     }
                 }
-            },
-            {
-                extend: 'pdfHtml5',
-                text: '📄 Export PDF',
-                className: 'btn btn-danger',
-                orientation: 'landscape',
-                pageSize: 'A4',
-                footer: true,
-                exportOptions: {
-                    columns: ':visible',
-                    format: {
-                        body: function(data, row, column, node) {
-                            if (column === 0) return row + 1;
-                            if (column >= 3) { // Kolom angka (total pagu, penyesuaian, pagu setelah)
-                                // Hapus semua karakter non-angka kecuali koma
-                                let cleanData = data.replace(/[^\d,]/g, '');
-                                // Ganti koma dengan titik untuk format angka
-                                return cleanData.replace(',', '.');
-                            }
-                            return data;
-                        },
-                        footer: function(data, row, column, node) {
-                            if (column >= 3) { // Kolom angka di footer
-                                let cleanData = data.replace(/[^\d,]/g, '');
-                                return cleanData.replace(',', '.');
-                            }
-                            return data;
-                        }
-                    }
-                },
-                customize: function(doc) {
-                    // Set font size
-                    doc.defaultStyle.fontSize = 8;
-                    doc.styles.tableHeader.fontSize = 9;
-                    
-                    // Set column widths
-                    doc.content[1].table.widths = ['5%', '15%', '35%', '15%', '15%', '15%'];
-                    
-                    // Set alignment
-                    doc.styles.tableHeader.alignment = 'center';
-                    doc.styles.tableBody.alignment = 'right';
-                    
-                    // Set number format for numeric columns
-                    doc.content[1].table.body.forEach(function(row, i) {
-                        if (i > 0) { // Skip header row
-                            for (let j = 3; j < row.length; j++) { // Start from index 3 (numeric columns)
-                                if (row[j].text) {
-                                    // Format number with thousand separator and 2 decimal places
-                                    let num = parseFloat(row[j].text.replace(/\./g, '').replace(',', '.'));
-                                    row[j].text = num.toLocaleString('id-ID', {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2
-                                    });
-                                }
-                            }
-                        }
-                    });
-                }
             }
         ],
         paging: false,
@@ -167,8 +109,120 @@ function exportToExcel() {
     $('.buttons-excel').click();
 }
 
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".").replace(',', '.');
+}
+
 function exportToPDF() {
-    $('.buttons-pdf').click();
+    // Get the table data
+    var table = $('#rekapTable').DataTable();
+    var data = table.buttons.exportData({
+        columns: ':visible',
+        format: {
+            body: function(data, row, column, node) {
+                if (column === 0) return row + 1;
+                if (column >= 3) {
+                    // Keep the original format with dots and commas
+                    return data;
+                }
+                return data;
+            },
+            footer: function(data, row, column, node) {
+                if (column >= 3) {
+                    // Keep the original format with dots and commas
+                    return data;
+                }
+                return data;
+            }
+        }
+    });
+
+    // Create PDF document
+    var docDefinition = {
+        pageOrientation: 'landscape',
+        pageSize: 'A4',
+        content: [
+            {
+                text: 'Simulasi Belanja per OPD',
+                style: 'header',
+                alignment: 'center',
+                margin: [0, 0, 0, 10]
+            },
+            {
+                table: {
+                    headerRows: 1,
+                    widths: ['5%', '15%', '35%', '15%', '15%', '15%'],
+                    body: [
+                        // Header
+                        [
+                            { text: 'No', style: 'tableHeader' },
+                            { text: 'Kode OPD', style: 'tableHeader' },
+                            { text: 'Nama OPD', style: 'tableHeader' },
+                            { text: 'Total Pagu', style: 'tableHeader' },
+                            { text: 'Penyesuaian', style: 'tableHeader' },
+                            { text: 'Pagu Setelah Penyesuaian', style: 'tableHeader' }
+                        ],
+                        // Body
+                        ...data.body.map(row => [
+                            { text: row[0], alignment: 'center' },
+                            { text: row[1] },
+                            { text: row[2] },
+                            { text: row[3], alignment: 'right' },
+                            { text: row[4], alignment: 'right' },
+                            { text: row[5], alignment: 'right' }
+                        ]),
+                        // Footer
+                        [
+                            { text: '', colSpan: 3, style: 'tableFooter' },
+                            {},
+                            {},
+                            { text: data.footer[0][3], alignment: 'right', style: 'tableFooter' },
+                            { text: data.footer[0][4], alignment: 'right', style: 'tableFooter' },
+                            { text: data.footer[0][5], alignment: 'right', style: 'tableFooter' }
+                        ]
+                    ]
+                },
+                layout: {
+                    hLineWidth: function(i, node) { return 0.5; },
+                    vLineWidth: function(i, node) { return 0.5; },
+                    hLineColor: function(i, node) { return '#aaa'; },
+                    vLineColor: function(i, node) { return '#aaa'; },
+                    paddingLeft: function(i, node) { return 4; },
+                    paddingRight: function(i, node) { return 4; },
+                    paddingTop: function(i, node) { return 2; },
+                    paddingBottom: function(i, node) { return 2; },
+                    fillColor: function(rowIndex, node, columnIndex) {
+                        return (rowIndex === 0) ? '#428bca' : null;
+                    }
+                }
+            }
+        ],
+        styles: {
+            header: {
+                fontSize: 14,
+                bold: true,
+                margin: [0, 0, 0, 10]
+            },
+            tableHeader: {
+                bold: true,
+                fontSize: 9,
+                color: 'white',
+                fillColor: '#428bca',
+                alignment: 'center'
+            },
+            tableFooter: {
+                bold: true,
+                fontSize: 9,
+                fillColor: '#f2f2f2'
+            }
+        },
+        defaultStyle: {
+            fontSize: 8
+        }
+    };
+
+    // Generate and download PDF
+    pdfMake.createPdf(docDefinition).download('simulasi-belanja-opd.pdf');
 }
 </script>
 @endpush
