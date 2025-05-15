@@ -581,50 +581,63 @@
     });
 
     // Fungsi untuk export ke PDF
-    function exportToPDF() {
-        // Sembunyikan elemen yang tidak perlu
-        const printArea = document.getElementById('print-area');
-        const originalDisplay = {};
-        const elementsToHide = printArea.querySelectorAll('.btn, .modal, .modal-backdrop, nav, aside, .navbar, .sidebar, .footer');
-        
-        elementsToHide.forEach(el => {
-            originalDisplay[el.id] = el.style.display;
-            el.style.display = 'none';
-        });
+    async function exportToPDF() {
+        try {
+            // Tampilkan loading
+            const loadingDiv = $('<div>')
+                .addClass('position-fixed top-50 start-50 translate-middle')
+                .css({
+                    'z-index': '9999',
+                    'background': 'rgba(255,255,255,0.8)',
+                    'padding': '20px',
+                    'border-radius': '5px',
+                    'box-shadow': '0 0 10px rgba(0,0,0,0.1)'
+                })
+                .html('<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><div class="mt-2">Mempersiapkan PDF...</div>');
+            $('body').append(loadingDiv);
 
-        // Konfigurasi PDF
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const margin = 10;
-
-        // Fungsi untuk menambahkan tabel ke PDF
-        const addTableToPDF = async (tableElement, yPosition) => {
-            const canvas = await html2canvas(tableElement, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                windowWidth: tableElement.scrollWidth,
-                windowHeight: tableElement.scrollHeight
+            // Sembunyikan elemen yang tidak perlu
+            const printArea = document.getElementById('print-area');
+            const originalDisplay = {};
+            const elementsToHide = printArea.querySelectorAll('.btn, .modal, .modal-backdrop, nav, aside, .navbar, .sidebar, .footer');
+            
+            elementsToHide.forEach(el => {
+                originalDisplay[el.id] = el.style.display;
+                el.style.display = 'none';
             });
 
-            const imgData = canvas.toDataURL('image/png');
-            const imgWidth = pageWidth - (2 * margin);
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            // Inisialisasi jsPDF
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 10;
 
-            // Jika tabel terlalu panjang, buat halaman baru
-            if (yPosition + imgHeight > pageHeight - margin) {
-                pdf.addPage();
-                yPosition = margin;
-            }
+            // Fungsi untuk menambahkan tabel ke PDF
+            const addTableToPDF = async (tableElement, yPosition) => {
+                const canvas = await html2canvas(tableElement, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    windowWidth: tableElement.scrollWidth,
+                    windowHeight: tableElement.scrollHeight,
+                    backgroundColor: '#ffffff'
+                });
 
-            pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
-            return yPosition + imgHeight + 10;
-        };
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = pageWidth - (2 * margin);
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        // Export setiap tabel
-        (async () => {
+                // Jika tabel terlalu panjang, buat halaman baru
+                if (yPosition + imgHeight > pageHeight - margin) {
+                    pdf.addPage();
+                    yPosition = margin;
+                }
+
+                pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
+                return yPosition + imgHeight + 10;
+            };
+
             let yPosition = margin;
             
             // Tambahkan judul
@@ -657,7 +670,15 @@
             elementsToHide.forEach(el => {
                 el.style.display = originalDisplay[el.id];
             });
-        })();
+
+            // Hapus loading
+            loadingDiv.remove();
+
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            alert('Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');
+            loadingDiv.remove();
+        }
     }
 </script>
 @endpush
