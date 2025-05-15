@@ -42,7 +42,9 @@
                         <strong>SKPD:</strong> {{ $skpdTerpilih ? ($skpdTerpilih->kode_skpd . ' - ' . $skpdTerpilih->nama_skpd) : '-' }}<br>
                         <strong>Tahapan:</strong> {{ $tahapanTerpilih ? $tahapanTerpilih->name : '-' }}
                     </div>
+                    
                     <div class="table-responsive" style="max-height: 80vh; overflow-y: auto;">
+                        <h5 class="mb-2 text-primary">Rekap Data Anggaran</h5>
                         <table class="table align-middle table-sm table-bordered table-striped table-hover" id="rekapTable">
                             <thead class="table-primary">
                                 <tr>
@@ -532,6 +534,7 @@
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
     $(document).ready(function() {
         // DataTable initialization
@@ -580,106 +583,114 @@
         });
     });
 
-    // Fungsi untuk export ke PDF
-    async function exportToPDF() {
-        try {
-            // Tampilkan loading
-            const loadingDiv = $('<div>')
-                .addClass('position-fixed top-50 start-50 translate-middle')
-                .css({
-                    'z-index': '9999',
-                    'background': 'rgba(255,255,255,0.8)',
-                    'padding': '20px',
-                    'border-radius': '5px',
-                    'box-shadow': '0 0 10px rgba(0,0,0,0.1)'
-                })
-                .html('<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><div class="mt-2">Mempersiapkan PDF...</div>');
-            $('body').append(loadingDiv);
+    // Fungsi untuk export ke PDF (dijamin global)
+    window.exportToPDF = async function() {
+    try {
+        // Tampilkan semua data di DataTables
+        $('.dataTable').each(function() {
+            $(this).DataTable().page.len(-1).draw();
+        });
 
-            // Sembunyikan elemen yang tidak perlu
-            const printArea = document.getElementById('print-area');
-            const originalDisplay = {};
-            const elementsToHide = printArea.querySelectorAll('.btn, .modal, .modal-backdrop, nav, aside, .navbar, .sidebar, .footer');
-            
-            elementsToHide.forEach(el => {
-                originalDisplay[el.id] = el.style.display;
-                el.style.display = 'none';
-            });
+        // Tampilkan loading
+        const loadingDiv = $('<div>')
+            .addClass('position-fixed top-50 start-50 translate-middle')
+            .css({
+                'z-index': '9999',
+                'background': 'rgba(255,255,255,0.8)',
+                'padding': '20px',
+                'border-radius': '5px',
+                'box-shadow': '0 0 10px rgba(0,0,0,0.1)'
+            })
+            .html('<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><div class="mt-2">Mempersiapkan PDF...</div>');
+        $('body').append(loadingDiv);
 
-            // Inisialisasi jsPDF
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            const margin = 10;
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const margin = 10;
+        let firstTable = true;
 
-            // Fungsi untuk menambahkan tabel ke PDF
-            const addTableToPDF = async (tableElement, yPosition) => {
-                const canvas = await html2canvas(tableElement, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    windowWidth: tableElement.scrollWidth,
-                    windowHeight: tableElement.scrollHeight,
-                    backgroundColor: '#ffffff'
-                });
+        // Ambil semua tabel di halaman
+        const tables = document.querySelectorAll('table');
 
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = pageWidth - (2 * margin);
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        for (let i = 0; i < tables.length; i++) {
+            const table = tables[i];
 
-                // Jika tabel terlalu panjang, buat halaman baru
-                if (yPosition + imgHeight > pageHeight - margin) {
-                    pdf.addPage();
-                    yPosition = margin;
+            // Ambil judul tabel jika ada (misal, h5/h4 sebelum tabel)
+            let title = '';
+            let prev = table.previousElementSibling;
+            while (prev) {
+                if (prev.tagName && /^H[1-6]$/.test(prev.tagName)) {
+                    title = prev.innerText;
+                    break;
                 }
+                prev = prev.previousElementSibling;
+            }
+            if (!title) title = 'Tabel ' + (i + 1);
 
-                pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
-                return yPosition + imgHeight + 10;
-            };
-
-            let yPosition = margin;
-            
-            // Tambahkan judul
-            pdf.setFontSize(14);
-            pdf.text('Simulasi Perubahan Anggaran', pageWidth/2, yPosition, { align: 'center' });
-            yPosition += 10;
-
-            // Tambahkan informasi SKPD dan Tahapan
-            pdf.setFontSize(10);
-            const skpdInfo = document.querySelector('#print-area .mb-2').textContent;
-            pdf.text(skpdInfo, margin, yPosition);
-            yPosition += 15;
-
-            // Export tabel rekap
-            const rekapTable = document.querySelector('#rekapTable').closest('.table-responsive');
-            yPosition = await addTableToPDF(rekapTable, yPosition);
-
-            // Export tabel struktur belanja
-            const strukturTable = document.querySelector('.col-md-6:last-child .table-responsive');
-            yPosition = await addTableToPDF(strukturTable, yPosition);
-
-            // Export tabel simulasi penyesuaian
-            const simulasiTable = document.querySelector('.col-12:last-child .table-responsive');
-            yPosition = await addTableToPDF(simulasiTable, yPosition);
-
-            // Simpan PDF
-            pdf.save('simulasi-perubahan-anggaran.pdf');
-
-            // Kembalikan tampilan elemen yang disembunyikan
-            elementsToHide.forEach(el => {
-                el.style.display = originalDisplay[el.id];
+            // Ambil header dan data
+            const headers = [];
+            table.querySelectorAll('thead tr th').forEach(th => {
+                headers.push(th.innerText.trim());
             });
 
-            // Hapus loading
-            loadingDiv.remove();
+            const body = [];
+            table.querySelectorAll('tbody tr').forEach(tr => {
+                const row = [];
+                tr.querySelectorAll('td').forEach(td => {
+                    row.push(td.innerText.trim());
+                });
+                if (row.length) body.push(row);
+            });
 
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            alert('Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');
-            loadingDiv.remove();
+            // Ambil footer jika ada
+            let foot = [];
+            const tfoot = table.querySelector('tfoot');
+            if (tfoot) {
+                tfoot.querySelectorAll('tr').forEach(tr => {
+                    const row = [];
+                    tr.querySelectorAll('th,td').forEach((cell, idx) => {
+                        row[idx] = cell.innerText.trim();
+                    });
+                    if (row.length) foot.push(row);
+                });
+            }
+
+            // Tambahkan judul tabel
+            if (!firstTable) pdf.addPage();
+            pdf.setFontSize(12);
+            pdf.text(title, margin, 18);
+
+            // Render tabel dengan autotable
+            pdf.autoTable({
+                startY: 22,
+                head: [headers],
+                body: body,
+                foot: foot,
+                margin: { left: margin, right: margin },
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+                theme: 'grid',
+                showHead: 'firstPage', // Header hanya di halaman pertama
+                showFoot: 'lastPage',  // Footer hanya di halaman terakhir
+                didDrawPage: function (data) {
+                    // Judul hanya di halaman pertama tabel
+                    if (data.pageNumber === pdf.internal.getNumberOfPages() - (firstTable ? 0 : 1)) {
+                        pdf.setFontSize(12);
+                        pdf.text(title, margin, 18);
+                    }
+                }
+            });
+
+            firstTable = false;
         }
+
+        pdf.save('tabel-simulasi-anggaran.pdf');
+        loadingDiv.remove();
+    } catch (error) {
+        alert('Terjadi kesalahan saat membuat PDF: ' + error.message);
+        if (typeof loadingDiv !== 'undefined') loadingDiv.remove();
     }
+}
 </script>
 @endpush
 @endsection 

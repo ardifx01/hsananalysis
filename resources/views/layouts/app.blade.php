@@ -53,7 +53,7 @@
 
 </head>
 
-<body class="  ">
+<body class="">
     <!-- loader Start -->
     <div id="loading">
         <div class="loader simple-loader">
@@ -70,7 +70,7 @@
     <main class="main-content">
         <div class="position-relative iq-banner">
             @include('layouts.navbar')
-             <div class="conatiner-fluid content-inner mt-n5 py-0">
+             <div class="py-0 conatiner-fluid content-inner mt-n5">
             @yield('content')
             </div>
 
@@ -120,6 +120,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+@stack('scripts')
 
 
 </body>
