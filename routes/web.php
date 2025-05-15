@@ -137,6 +137,9 @@ Route::get('/progress/opd-rek', [ProgressController::class, 'progressPerOpdRek']
 
     // Simulasi Perubahan Anggaran
     Route::get('/simulasi-perubahan', [App\Http\Controllers\SimulasiPerubahanController::class, 'index'])->name('simulasi-perubahan.index');
+
+    // Simulasi Penyesuaian Anggaran
+    Route::resource('simulasi-penyesuaian-anggaran', App\Http\Controllers\SimulasiPenyesuaianAnggaranController::class);
 });
 
 // ROUTE AUTENTIKASI

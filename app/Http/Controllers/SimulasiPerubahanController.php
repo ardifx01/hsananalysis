@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\DataAnggaran;
 use App\Models\Tahapan;
+use App\Models\KodeRekening;
+use App\Models\SimulasiPenyesuaianAnggaran;
 
 class SimulasiPerubahanController extends Controller
 {
@@ -38,6 +40,32 @@ class SimulasiPerubahanController extends Controller
                 ->get();
         }
 
-        return view('simulasi-perubahan.index', compact('tahapans', 'tahapanId', 'rekap', 'skpds', 'skpdKode', 'skpdTerpilih', 'tahapanTerpilih'));
+        // Ambil semua kode rekening yang diawali angka 5 dan hanya 2 atau 3 segmen (misal: 5.1 dan 5.1.01)
+        $kodeRekenings = KodeRekening::where(function($q) {
+            $q->whereRaw("kode_rekening REGEXP '^5\\.[0-9]+$'") // 2 segmen, contoh: 5.1
+              ->orWhereRaw("kode_rekening REGEXP '^5\\.[0-9]+\\.[0-9]{2}$'"); // 3 segmen, contoh: 5.1.01
+        })
+        ->orderBy('kode_rekening')
+        ->get();
+
+        // Ambil semua data simulasi penyesuaian anggaran HANYA untuk OPD aktif
+        $simulasiPenyesuaian = collect();
+        if ($skpdKode) {
+            $simulasiPenyesuaian = SimulasiPenyesuaianAnggaran::where('kode_opd', $skpdKode)
+                ->orderBy('id', 'desc')
+                ->get();
+        }
+
+        return view('simulasi-perubahan.index', [
+            'tahapans' => $tahapans,
+            'tahapanId' => $tahapanId,
+            'rekap' => $rekap,
+            'skpds' => $skpds,
+            'skpdKode' => $skpdKode,
+            'skpdTerpilih' => $skpdTerpilih,
+            'tahapanTerpilih' => $tahapanTerpilih,
+            'kodeRekenings' => $kodeRekenings,
+            'simulasiPenyesuaian' => $simulasiPenyesuaian,
+        ]);
     }
 }
