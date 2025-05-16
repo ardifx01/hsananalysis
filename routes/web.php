@@ -11,6 +11,7 @@ use App\Http\Controllers\KodeRekeningController;
 
 use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\TahapanController;
+use App\Http\Controllers\RealisasiController;
 
 // Dashboard tetap bisa diakses tanpa login
 Route::get('/', function () {
@@ -143,6 +144,10 @@ Route::get('/progress/opd-rek', [ProgressController::class, 'progressPerOpdRek']
 
     // Simulasi Belanja per OPD
     Route::get('/simulasi/belanja-opd', [App\Http\Controllers\SimulasiPerubahanController::class, 'simulasiBelanjaOpd'])->name('simulasi.belanja-opd');
+
+    // Realisasi
+    Route::resource('realisasi', RealisasiController::class);
+    Route::post('/realisasi/upload', [RealisasiController::class, 'upload'])->name('realisasi.upload');
 });
 
 // ROUTE AUTENTIKASI
