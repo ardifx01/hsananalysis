@@ -172,4 +172,17 @@ class RealisasiController extends Controller
         
         return (float) $value;
     }
+
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'selected_ids' => 'required|array',
+            'selected_ids.*' => 'exists:realisasis,id'
+        ]);
+
+        Realisasi::whereIn('id', $request->selected_ids)->delete();
+
+        return redirect()->route('realisasi.index')
+                        ->with('success', 'Data yang dipilih berhasil dihapus');
+    }
 } 

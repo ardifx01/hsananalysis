@@ -32,66 +32,83 @@
             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createModal">
                 <i class="bi bi-plus-circle"></i> Tambah Data
             </button>
+            <button type="button" class="btn btn-danger btn-sm" id="bulkDeleteBtn" style="display: none;">
+                <i class="bi bi-trash"></i> Hapus Terpilih
+            </button>
         </div>
     </div>
     <div class="card-body">
-        <div class="table-responsive">
-            <table class="table align-middle table-sm table-bordered table-striped" style="font-size: 0.8rem;">
-                <thead class="table-primary">
-                    <tr>
-                        <th style="width:40px">No</th>
-                        <th>Kode Rekening</th>
-                        <th style="max-width: 200px;">Uraian</th>
-                        <th class="text-end">Anggaran</th>
-                        <th class="text-end">Realisasi</th>
-                        <th class="text-end">Persentase</th>
-                        <th class="text-end">Realisasi LY</th>
-                        <th style="width:100px">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($realisasis as $i => $realisasi)
-                    <tr>
-                        <td>{{ $i + 1 }}</td>
-                        <td>{{ $realisasi->kode_rekening }}</td>
-                        <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $realisasi->uraian }}">{{ $realisasi->uraian }}</td>
-                        <td class="text-end">{{ number_format($realisasi->anggaran, 2, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($realisasi->realisasi, 2, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($realisasi->persentase, 2, ',', '.') }}%</td>
-                        <td class="text-end">{{ number_format($realisasi->realisasi_ly, 2, ',', '.') }}</td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ $realisasi->id }}">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <form action="{{ route('realisasi.destroy', $realisasi) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
-                                        <i class="bi bi-trash"></i>
+        <form id="bulkDeleteForm" action="{{ route('realisasi.bulk-delete') }}" method="POST">
+            @csrf
+            @method('DELETE')
+            <div class="table-responsive">
+                <table class="table align-middle table-sm table-bordered table-striped" style="font-size: 0.8rem;">
+                    <thead class="table-primary">
+                        <tr>
+                            <th style="width:40px">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="selectAll">
+                                </div>
+                            </th>
+                            <th style="width:40px">No</th>
+                            <th>Kode Rekening</th>
+                            <th style="max-width: 200px;">Uraian</th>
+                            <th class="text-end">Anggaran</th>
+                            <th class="text-end">Realisasi</th>
+                            <th class="text-end">Persentase</th>
+                            <th class="text-end">Realisasi LY</th>
+                            <th style="width:100px">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($realisasis as $i => $realisasi)
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input item-checkbox" type="checkbox" name="selected_ids[]" value="{{ $realisasi->id }}">
+                                </div>
+                            </td>
+                            <td>{{ $i + 1 }}</td>
+                            <td>{{ $realisasi->kode_rekening }}</td>
+                            <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $realisasi->uraian }}">{{ $realisasi->uraian }}</td>
+                            <td class="text-end">{{ number_format($realisasi->anggaran, 2, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format($realisasi->realisasi, 2, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format($realisasi->persentase, 2, ',', '.') }}%</td>
+                            <td class="text-end">{{ number_format($realisasi->realisasi_ly, 2, ',', '.') }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ $realisasi->id }}">
+                                        <i class="bi bi-pencil"></i>
                                     </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="8" class="text-center">Tidak ada data</td>
-                    </tr>
-                    @endforelse
-                    @if($realisasis->count() > 0)
-                    <tr class="table-primary fw-bold">
-                        <td colspan="3" class="text-center">TOTAL</td>
-                        <td class="text-end">{{ number_format($realisasis->sum('anggaran'), 2, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($realisasis->sum('realisasi'), 2, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($realisasis->avg('persentase'), 2, ',', '.') }}%</td>
-                        <td class="text-end">{{ number_format($realisasis->sum('realisasi_ly'), 2, ',', '.') }}</td>
-                        <td></td>
-                    </tr>
-                    @endif
-                </tbody>
-            </table>
-        </div>
+                                    <form action="{{ route('realisasi.destroy', $realisasi) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="9" class="text-center">Tidak ada data</td>
+                        </tr>
+                        @endforelse
+                        @if($realisasis->count() > 0)
+                        <tr class="table-primary fw-bold">
+                            <td colspan="4" class="text-center">TOTAL</td>
+                            <td class="text-end">{{ number_format($realisasis->sum('anggaran'), 2, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format($realisasis->sum('realisasi'), 2, ',', '.') }}</td>
+                            <td class="text-end">{{ number_format($realisasis->avg('persentase'), 2, ',', '.') }}%</td>
+                            <td class="text-end">{{ number_format($realisasis->sum('realisasi_ly'), 2, ',', '.') }}</td>
+                            <td></td>
+                        </tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -342,4 +359,45 @@
         </div>
     </div>
 </div>
-@endsection 
+@endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('selectAll');
+    const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+
+    // Handle select all checkbox
+    selectAll.addEventListener('change', function() {
+        itemCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateBulkDeleteButton();
+    });
+
+    // Handle individual checkboxes
+    itemCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateBulkDeleteButton();
+            // Update select all checkbox
+            selectAll.checked = Array.from(itemCheckboxes).every(cb => cb.checked);
+        });
+    });
+
+    // Update bulk delete button visibility
+    function updateBulkDeleteButton() {
+        const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+        bulkDeleteBtn.style.display = checkedBoxes.length > 0 ? 'inline-block' : 'none';
+    }
+
+    // Handle bulk delete
+    bulkDeleteBtn.addEventListener('click', function() {
+        if (confirm('Apakah Anda yakin ingin menghapus data yang dipilih?')) {
+            bulkDeleteForm.submit();
+        }
+    });
+});
+</script>
+@endpush 

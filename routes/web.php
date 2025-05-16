@@ -148,6 +148,7 @@ Route::get('/progress/opd-rek', [ProgressController::class, 'progressPerOpdRek']
     // Realisasi
     Route::resource('realisasi', RealisasiController::class);
     Route::post('/realisasi/upload', [RealisasiController::class, 'upload'])->name('realisasi.upload');
+    Route::delete('/realisasi/bulk-delete', [RealisasiController::class, 'bulkDelete'])->name('realisasi.bulk-delete');
 });
 
 // ROUTE AUTENTIKASI
