@@ -13,7 +13,7 @@
                     <option value="">Pilih Periode</option>
                     @foreach($periods as $period)
                         <option value="{{ $period }}" {{ request('periode') == $period ? 'selected' : '' }}>
-                            {{ \Carbon\Carbon::parse($period)->format('d/m/Y') }}
+                            {{ \Carbon\Carbon::createFromFormat('Y-m', $period)->format('F Y') }}
                         </option>
                     @endforeach
                 </select>
@@ -32,83 +32,69 @@
             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createModal">
                 <i class="bi bi-plus-circle"></i> Tambah Data
             </button>
-            <button type="button" class="btn btn-danger btn-sm" id="bulkDeleteBtn" style="display: none;">
-                <i class="bi bi-trash"></i> Hapus Terpilih
+            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#bulkDeleteModal">
+                <i class="bi bi-trash"></i> Hapus Massal
             </button>
         </div>
     </div>
     <div class="card-body">
-        <form id="bulkDeleteForm" action="{{ route('realisasi.bulk-delete') }}" method="POST">
-            @csrf
-            @method('DELETE')
-            <div class="table-responsive">
-                <table class="table align-middle table-sm table-bordered table-striped" style="font-size: 0.8rem;">
-                    <thead class="table-primary">
-                        <tr>
-                            <th style="width:40px">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="selectAll">
-                                </div>
-                            </th>
-                            <th style="width:40px">No</th>
-                            <th>Kode Rekening</th>
-                            <th style="max-width: 200px;">Uraian</th>
-                            <th class="text-end">Anggaran</th>
-                            <th class="text-end">Realisasi</th>
-                            <th class="text-end">Persentase</th>
-                            <th class="text-end">Realisasi LY</th>
-                            <th style="width:100px">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($realisasis as $i => $realisasi)
-                        <tr>
-                            <td>
-                                <div class="form-check">
-                                    <input class="form-check-input item-checkbox" type="checkbox" name="selected_ids[]" value="{{ $realisasi->id }}">
-                                </div>
-                            </td>
-                            <td>{{ $i + 1 }}</td>
-                            <td>{{ $realisasi->kode_rekening }}</td>
-                            <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $realisasi->uraian }}">{{ $realisasi->uraian }}</td>
-                            <td class="text-end">{{ number_format($realisasi->anggaran, 2, ',', '.') }}</td>
-                            <td class="text-end">{{ number_format($realisasi->realisasi, 2, ',', '.') }}</td>
-                            <td class="text-end">{{ number_format($realisasi->persentase, 2, ',', '.') }}%</td>
-                            <td class="text-end">{{ number_format($realisasi->realisasi_ly, 2, ',', '.') }}</td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ $realisasi->id }}">
-                                        <i class="bi bi-pencil"></i>
+        <div class="table-responsive">
+            <table class="table align-middle table-sm table-bordered table-striped" style="font-size: 0.8rem;">
+                <thead class="table-primary">
+                    <tr>
+                        <th style="width:40px">No</th>
+                        <th>Kode Rekening</th>
+                        <th style="max-width: 200px;">Uraian</th>
+                        <th class="text-end">Anggaran</th>
+                        <th class="text-end">Realisasi</th>
+                        <th class="text-end">Persentase</th>
+                        <th class="text-end">Realisasi LY</th>
+                        <th style="width:100px">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($realisasis as $i => $realisasi)
+                    <tr>
+                        <td>{{ $i + 1 }}</td>
+                        <td>{{ $realisasi->kode_rekening }}</td>
+                        <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $realisasi->uraian }}">{{ $realisasi->uraian }}</td>
+                        <td class="text-end">{{ number_format($realisasi->anggaran, 2, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($realisasi->realisasi, 2, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($realisasi->persentase, 2, ',', '.') }}%</td>
+                        <td class="text-end">{{ number_format($realisasi->realisasi_ly, 2, ',', '.') }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ $realisasi->id }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form action="{{ route('realisasi.destroy', $realisasi) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                                        <i class="bi bi-trash"></i>
                                     </button>
-                                    <form action="{{ route('realisasi.destroy', $realisasi) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="9" class="text-center">Tidak ada data</td>
-                        </tr>
-                        @endforelse
-                        @if($realisasis->count() > 0)
-                        <tr class="table-primary fw-bold">
-                            <td colspan="4" class="text-center">TOTAL</td>
-                            <td class="text-end">{{ number_format($realisasis->sum('anggaran'), 2, ',', '.') }}</td>
-                            <td class="text-end">{{ number_format($realisasis->sum('realisasi'), 2, ',', '.') }}</td>
-                            <td class="text-end">{{ number_format($realisasis->avg('persentase'), 2, ',', '.') }}%</td>
-                            <td class="text-end">{{ number_format($realisasis->sum('realisasi_ly'), 2, ',', '.') }}</td>
-                            <td></td>
-                        </tr>
-                        @endif
-                    </tbody>
-                </table>
-            </div>
-        </form>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="8" class="text-center">Tidak ada data</td>
+                    </tr>
+                    @endforelse
+                    @if($realisasis->count() > 0)
+                    <tr class="table-primary fw-bold">
+                        <td colspan="3" class="text-center">TOTAL</td>
+                        <td class="text-end">{{ number_format($realisasis->sum('anggaran'), 2, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($realisasis->sum('realisasi'), 2, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($realisasis->avg('persentase'), 2, ',', '.') }}%</td>
+                        <td class="text-end">{{ number_format($realisasis->sum('realisasi_ly'), 2, ',', '.') }}</td>
+                        <td></td>
+                    </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -333,7 +319,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="periode" class="form-label">Periode</label>
-                        <input type="date" class="form-control @error('periode') is-invalid @enderror" 
+                        <input type="month" class="form-control @error('periode') is-invalid @enderror" 
                                id="periode" name="periode" value="{{ old('periode') }}" required>
                         @error('periode')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -354,6 +340,48 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Modal -->
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkDeleteModalLabel">Hapus Data Massal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('realisasi.bulk-delete') }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="bulk_kode_opd" class="form-label">Kode OPD</label>
+                        <select class="form-select" id="bulk_kode_opd" name="kode_opd">
+                            <option value="">Semua OPD</option>
+                            @foreach($opds as $opd)
+                                <option value="{{ $opd->kode_skpd }}">
+                                    {{ $opd->kode_skpd }} - {{ $opd->nama_skpd }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bulk_periode" class="form-label">Periode</label>
+                        <input type="month" class="form-control" id="bulk_periode" name="periode">
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Perhatian: Tindakan ini akan menghapus semua data yang sesuai dengan kriteria yang dipilih.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus data yang sesuai dengan kriteria yang dipilih?')">
+                        Hapus
+                    </button>
                 </div>
             </form>
         </div>

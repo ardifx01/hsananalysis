@@ -16,7 +16,8 @@ class RealisasiController extends Controller
 
         // Filter by periode if provided
         if ($request->has('periode')) {
-            $query->where('periode', $request->periode);
+            $query->whereYear('periode', substr($request->periode, 0, 4))
+                  ->whereMonth('periode', substr($request->periode, 5, 2));
         }
 
         // Filter by kode_opd if provided
@@ -37,8 +38,8 @@ class RealisasiController extends Controller
                   ->orderBy('kode_skpd')
                   ->get();
 
-        // Get unique periods for filter dropdown
-        $periods = Realisasi::select('periode')
+        // Get unique periods for filter dropdown (grouped by year and month)
+        $periods = Realisasi::selectRaw('DATE_FORMAT(periode, "%Y-%m") as periode')
                           ->distinct()
                           ->orderBy('periode', 'desc')
                           ->pluck('periode');
@@ -106,7 +107,7 @@ class RealisasiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'kode_opd' => 'required|string',
-            'periode' => 'required|date',
+            'periode' => 'required|date_format:Y-m',
             'file' => 'required|file|mimes:xlsx,xls'
         ]);
 
@@ -127,9 +128,12 @@ class RealisasiController extends Controller
             foreach ($rows as $row) {
                 if (empty($row[0])) continue; // Skip empty rows
                 
+                // Set the first day of the month
+                $periode = \Carbon\Carbon::createFromFormat('Y-m', $request->periode)->startOfMonth();
+                
                 $data[] = [
                     'kode_opd' => $request->kode_opd,
-                    'periode' => $request->periode,
+                    'periode' => $periode,
                     'kode_rekening' => $row[0], // kode rekening
                     'uraian' => $row[1], // uraian
                     'anggaran' => $this->parseNumber($row[2]), // anggaran
@@ -175,14 +179,35 @@ class RealisasiController extends Controller
 
     public function bulkDelete(Request $request)
     {
-        $request->validate([
-            'selected_ids' => 'required|array',
-            'selected_ids.*' => 'exists:realisasis,id'
-        ]);
+        $query = Realisasi::query();
 
-        Realisasi::whereIn('id', $request->selected_ids)->delete();
+        // Delete by selected IDs if provided
+        if ($request->has('selected_ids')) {
+            $request->validate([
+                'selected_ids' => 'required|array',
+                'selected_ids.*' => 'exists:realisasis,id'
+            ]);
+            $query->whereIn('id', $request->selected_ids);
+        }
+
+        // Delete by kode_opd if provided
+        if ($request->has('kode_opd') && !empty($request->kode_opd)) {
+            $query->where('kode_opd', $request->kode_opd);
+        }
+
+        // Delete by periode if provided
+        if ($request->has('periode') && !empty($request->periode)) {
+            $query->whereYear('periode', substr($request->periode, 0, 4))
+                  ->whereMonth('periode', substr($request->periode, 5, 2));
+        }
+
+        // Get count before deletion for message
+        $count = $query->count();
+
+        // Perform deletion
+        $query->delete();
 
         return redirect()->route('realisasi.index')
-                        ->with('success', 'Data yang dipilih berhasil dihapus');
+                        ->with('success', $count . ' data berhasil dihapus');
     }
 } 
