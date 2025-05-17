@@ -12,8 +12,8 @@
                 <select name="periode" class="form-select form-select-sm me-2" onchange="this.form.submit()">
                     <option value="">Pilih Periode</option>
                     @foreach($periods as $period)
-                        <option value="{{ $period }}" {{ request('periode') == $period ? 'selected' : '' }}>
-                            {{ \Carbon\Carbon::createFromFormat('Y-m', $period)->format('F Y') }}
+                        <option value="{{ substr($period, 0, 7) }}" {{ request('periode') == substr($period, 0, 7) ? 'selected' : '' }}>
+                            {{ \Carbon\Carbon::createFromFormat('Y-m', substr($period, 0, 7))->format('F Y') }}
                         </option>
                     @endforeach
                 </select>
@@ -319,7 +319,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="periode" class="form-label">Periode</label>
-                        <input type="month" class="form-control @error('periode') is-invalid @enderror" 
+                        <input type="date" class="form-control @error('periode') is-invalid @enderror" 
                                id="periode" name="periode" value="{{ old('periode') }}" required>
                         @error('periode')
                             <div class="invalid-feedback">{{ $message }}</div>

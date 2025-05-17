@@ -107,7 +107,7 @@ class RealisasiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'kode_opd' => 'required|string',
-            'periode' => 'required|date_format:Y-m',
+            'periode' => 'required|date',
             'file' => 'required|file|mimes:xlsx,xls'
         ]);
 
@@ -128,8 +128,7 @@ class RealisasiController extends Controller
             foreach ($rows as $row) {
                 if (empty($row[0])) continue; // Skip empty rows
                 
-                // Set the first day of the month
-                $periode = \Carbon\Carbon::createFromFormat('Y-m', $request->periode)->startOfMonth();
+                $periode = $request->periode;
                 
                 $data[] = [
                     'kode_opd' => $request->kode_opd,
