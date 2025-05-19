@@ -48,11 +48,13 @@
                         <table class="table mb-0 align-middle table-sm table-bordered table-striped">
                             <thead class="table-light">
                                 <tr>
-                                    <th style="font-size:12px; width: 120px;">Kode Rekening</th>
-                                    <th style="font-size:12px;">Uraian</th>
-                                    <th style="font-size:12px; width: 120px;">Total Pagu Belanja</th>
-                                    <th style="font-size:12px; width: 140px;">Pagu Setelah Penyesuaian</th>
-                                    <th style="font-size:12px; width: 120px;">Penyesuaian</th>
+                                    <th style="width: 120px;">Kode Rekening</th>
+                                    <th>Uraian</th>
+                                    <th style="width: 120px;">Anggaran</th>
+                                    <th style="width: 120px;">Realisasi</th>
+                                    <th style="width: 140px;">Anggaran-Realisasi</th>
+                                    <th style="width: 120px;">Penyesuaian</th>
+                                    <th style="width: 140px;">Proyeksi Perubahan</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -60,9 +62,12 @@
                                     $sumTotalPagu = 0;
                                     $sumTotalPaguSetelah = 0;
                                     $sumTotalPenyesuaian = 0;
+                                    $sumTotalRealisasi = 0;
+                                    $sumTotalProyeksi = 0;
                                 @endphp
                                 @foreach($kodeRekenings as $kr)
                                 @php
+                                    $is3Segmen = count(explode('.', $kr->kode_rekening)) === 3;
                                     $totalPagu = $rekap->where(function($item) use ($kr) {
                                         return str_starts_with($item->kode_rekening, $kr->kode_rekening);
                                     })->sum('total_pagu');
@@ -83,16 +88,30 @@
                                         $totalPaguSetelah += $item->total_pagu + $totalPenyesuaian;
                                     }
                                     $selisih = $totalPaguSetelah - $totalPagu;
-                                    $sumTotalPagu += $totalPagu;
-                                    $sumTotalPaguSetelah += $totalPaguSetelah;
-                                    $sumTotalPenyesuaian += $selisih;
+                                    $realisasiSegmen = $realisasiSegmenMap[$kr->kode_rekening] ?? 0;
+                                    $anggaranRealisasi = $totalPagu - $realisasiSegmen;
+                                    $proyeksiPerubahan = $anggaranRealisasi + $selisih;
+                                    if ($is3Segmen) {
+                                        $sumTotalPagu += $totalPagu;
+                                        $sumTotalPaguSetelah += $totalPaguSetelah;
+                                        $sumTotalPenyesuaian += $selisih;
+                                        $sumTotalRealisasi += $realisasiSegmen;
+                                        $sumTotalProyeksi += $proyeksiPerubahan;
+                                    }
                                 @endphp
                                 <tr>
-                                    <td style="font-size:12px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $kr->kode_rekening }}</td>
-                                    <td style="font-size:12px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ $kr->uraian }}">{{ \Illuminate\Support\Str::limit($kr->uraian, 50) }}</td>
-                                    <td style="font-size:12px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="text-end">{{ $totalPagu ? number_format($totalPagu, 2, ',', '.') : '-' }}</td>
-                                    <td style="font-size:12px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="text-end">{{ $totalPaguSetelah ? number_format($totalPaguSetelah, 2, ',', '.') : '-' }}</td>
-                                    <td style="font-size:12px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="text-end">{{ $selisih ? number_format($selisih, 2, ',', '.') : '-' }}</td>
+                                    <td style="max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $kr->kode_rekening }}</td>
+                                    <td style="max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ $kr->uraian }}">{{ \Illuminate\Support\Str::limit($kr->uraian, 50) }}</td>
+                                    <td class="text-end">{{ $totalPagu ? number_format($totalPagu, 2, ',', '.') : '-' }}</td>
+                                    <td class="text-end
+                                        @if($realisasiSegmen == $totalPaguSetelah && $totalPaguSetelah > 0) bg-success bg-opacity-25
+                                        @elseif($realisasiSegmen > $totalPaguSetelah && $totalPaguSetelah > 0) bg-danger bg-opacity-25
+                                        @endif">
+                                        {{ $realisasiSegmen ? number_format($realisasiSegmen, 2, ',', '.') : '-' }}
+                                    </td>
+                                    <td class="text-end">{{ $anggaranRealisasi ? number_format($anggaranRealisasi, 2, ',', '.') : '-' }}</td>
+                                    <td class="text-end">{{ $selisih ? number_format($selisih, 2, ',', '.') : '-' }}</td>
+                                    <td class="text-end">{{ $proyeksiPerubahan ? number_format($proyeksiPerubahan, 2, ',', '.') : '-' }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -100,80 +119,11 @@
                                 <tr class="table-secondary">
                                     <th></th>
                                     <th></th>
-                                    <th style="font-size:12px;" class="text-end">
-                                        @php
-                                            $sumTotalPagu3Segmen = 0;
-                                            foreach ($kodeRekenings as $kr) {
-                                                if (count(explode('.', $kr->kode_rekening)) === 3) {
-                                                    $sumTotalPagu3Segmen += $rekap->where(function($item) use ($kr) {
-                                                        return str_starts_with($item->kode_rekening, $kr->kode_rekening);
-                                                    })->sum('total_pagu');
-                                                }
-                                            }
-                                        @endphp
-                                        {{ number_format($sumTotalPagu3Segmen, 2, ',', '.') }}
-                                    </th>
-                                    <th style="font-size:12px;" class="text-end">
-                                        @php
-                                            $sumTotalPaguSetelah3Segmen = 0;
-                                            foreach ($kodeRekenings as $kr) {
-                                                if (count(explode('.', $kr->kode_rekening)) === 3) {
-                                                    $totalPagu = $rekap->where(function($item) use ($kr) {
-                                                        return str_starts_with($item->kode_rekening, $kr->kode_rekening);
-                                                    })->sum('total_pagu');
-                                                    $totalPaguSetelah = 0;
-                                                    $matchingRekaps = $rekap->where(function($item) use ($kr) {
-                                                        return str_starts_with($item->kode_rekening, $kr->kode_rekening);
-                                                    });
-                                                    foreach ($matchingRekaps as $item) {
-                                                        $penyesuaian = $simulasiPenyesuaian->where('kode_rekening', $item->kode_rekening);
-                                                        $totalPenyesuaian = 0;
-                                                        foreach ($penyesuaian as $adj) {
-                                                            if ($adj->operasi == '+') {
-                                                                $totalPenyesuaian += $adj->nilai;
-                                                            } elseif ($adj->operasi == '-') {
-                                                                $totalPenyesuaian -= $adj->nilai;
-                                                            }
-                                                        }
-                                                        $totalPaguSetelah += $item->total_pagu + $totalPenyesuaian;
-                                                    }
-                                                    $sumTotalPaguSetelah3Segmen += $totalPaguSetelah;
-                                                }
-                                            }
-                                        @endphp
-                                        {{ number_format($sumTotalPaguSetelah3Segmen, 2, ',', '.') }}
-                                    </th>
-                                    <th style="font-size:12px;" class="text-end">
-                                        @php
-                                            $sumTotalPenyesuaian3Segmen = 0;
-                                            foreach ($kodeRekenings as $kr) {
-                                                if (count(explode('.', $kr->kode_rekening)) === 3) {
-                                                    $totalPagu = $rekap->where(function($item) use ($kr) {
-                                                        return str_starts_with($item->kode_rekening, $kr->kode_rekening);
-                                                    })->sum('total_pagu');
-                                                    $totalPaguSetelah = 0;
-                                                    $matchingRekaps = $rekap->where(function($item) use ($kr) {
-                                                        return str_starts_with($item->kode_rekening, $kr->kode_rekening);
-                                                    });
-                                                    foreach ($matchingRekaps as $item) {
-                                                        $penyesuaian = $simulasiPenyesuaian->where('kode_rekening', $item->kode_rekening);
-                                                        $totalPenyesuaian = 0;
-                                                        foreach ($penyesuaian as $adj) {
-                                                            if ($adj->operasi == '+') {
-                                                                $totalPenyesuaian += $adj->nilai;
-                                                            } elseif ($adj->operasi == '-') {
-                                                                $totalPenyesuaian -= $adj->nilai;
-                                                            }
-                                                        }
-                                                        $totalPaguSetelah += $item->total_pagu + $totalPenyesuaian;
-                                                    }
-                                                    $selisih = $totalPaguSetelah - $totalPagu;
-                                                    $sumTotalPenyesuaian3Segmen += $selisih;
-                                                }
-                                            }
-                                        @endphp
-                                        {{ number_format($sumTotalPenyesuaian3Segmen, 2, ',', '.') }}
-                                    </th>
+                                    <th style="font-size:12px;" class="text-end">{{ number_format($sumTotalPagu, 2, ',', '.') }}</th>
+                                    <th style="font-size:12px;" class="text-end">{{ number_format($sumTotalRealisasi, 2, ',', '.') }}</th>
+                                    <th style="font-size:12px;" class="text-end">{{ number_format($sumTotalPagu - $sumTotalRealisasi, 2, ',', '.') }}</th>
+                                    <th style="font-size:12px;" class="text-end">{{ number_format($sumTotalPenyesuaian, 2, ',', '.') }}</th>
+                                    <th style="font-size:12px;" class="text-end">{{ number_format($sumTotalProyeksi, 2, ',', '.') }}</th>
                                 </tr>
                             </tfoot>
                         </table>
@@ -184,39 +134,46 @@
                         <table class="table align-middle table-sm table-bordered table-striped table-hover" id="rekapTable">
                             <thead class="table-primary">
                                 <tr>
-                                    <th style="font-size:12px; width:40px">No</th>
-                                    <th style="font-size:12px; width:120px">Kode Rekening</th>
-                                    <th style="font-size:12px; max-width: 180px;">Nama Rekening</th>
-                                    <th style="font-size:12px; width:120px">Total Pagu</th>
-                                    <th style="font-size:12px; width:140px">Pagu Setelah Penyesuaian</th>
-                                    <th style="font-size:12px; width:120px">Penyesuaian</th>
+                                    <th style="width:40px">No</th>
+                                    <th style="width:120px">Kode Rekening</th>
+                                    <th style="max-width: 180px;">Nama Rekening</th>
+                                    <th style="width:120px">Anggaran</th>
+                                    <th style="width:120px">Realisasi</th>
+                                    <th style="width:140px">Angggaran-Realisasi</th>
+                                    <th style="width:120px">Penyesuaian</th>
+                                    <th style="width:140px">Proyeksi Perubahan</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($rekap as $i => $item)
+                                @php
+                                    $realisasi = $realisasiMap[$item->kode_rekening] ?? 0;
+                                    $anggaranRealisasi = $item->total_pagu - $realisasi;
+                                    $penyesuaian = $simulasiPenyesuaian->where('kode_rekening', $item->kode_rekening);
+                                    $totalPenyesuaian = 0;
+                                    foreach ($penyesuaian as $adj) {
+                                        if ($adj->operasi == '+') {
+                                            $totalPenyesuaian += $adj->nilai;
+                                        } elseif ($adj->operasi == '-') {
+                                            $totalPenyesuaian -= $adj->nilai;
+                                        }
+                                    }
+                                    $proyeksiPerubahan = $anggaranRealisasi + $totalPenyesuaian;
+                                @endphp
                                 <tr>
-                                    <td style="font-size:12px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $i + 1 }}</td>
-                                    <td style="font-size:12px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $item->kode_rekening }}</td>
-                                    <td style="font-size:12px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="nama-rekening-compact" title="{{ $item->nama_rekening }}">{{ \Illuminate\Support\Str::limit($item->nama_rekening, 40) }}</td>
-                                    <td style="font-size:12px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="text-end">{{ number_format($item->total_pagu, 2, ',', '.') }}</td>
-                                    <td style="font-size:12px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="text-end">
-                                        @php
-                                            $penyesuaian = $simulasiPenyesuaian->where('kode_rekening', $item->kode_rekening);
-                                            $totalPenyesuaian = 0;
-                                            foreach ($penyesuaian as $adj) {
-                                                if ($adj->operasi == '+') {
-                                                    $totalPenyesuaian += $adj->nilai;
-                                                } elseif ($adj->operasi == '-') {
-                                                    $totalPenyesuaian -= $adj->nilai;
-                                                }
-                                            }
-                                            $paguSetelah = $item->total_pagu + $totalPenyesuaian;
-                                        @endphp
-                                        {{ number_format($paguSetelah, 2, ',', '.') }}
+                                    <td style="max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $i + 1 }}</td>
+                                    <td style="max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $item->kode_rekening }}</td>
+                                    <td style="max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="nama-rekening-compact" title="{{ $item->nama_rekening }}">{{ \Illuminate\Support\Str::limit($item->nama_rekening, 40) }}</td>
+                                    <td class="text-end">{{ number_format($item->total_pagu, 2, ',', '.') }}</td>
+                                    <td class="text-end
+                                        @if($realisasi == $item->total_pagu && $item->total_pagu > 0) bg-success bg-opacity-25
+                                        @elseif($realisasi > $item->total_pagu && $item->total_pagu > 0) bg-danger bg-opacity-25
+                                        @endif">
+                                        {{ $realisasi ? number_format($realisasi, 2, ',', '.') : '-' }}
                                     </td>
-                                    <td style="font-size:12px; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="text-end">
-                                        {{ number_format($totalPenyesuaian, 2, ',', '.') }}
-                                    </td>
+                                    <td class="text-end">{{ number_format($anggaranRealisasi, 2, ',', '.') }}</td>
+                                    <td class="text-end">{{ number_format($totalPenyesuaian, 2, ',', '.') }}</td>
+                                    <td class="text-end">{{ number_format($proyeksiPerubahan, 2, ',', '.') }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -230,21 +187,15 @@
                                     </th>
                                     <th class="text-end" style="font-size:12px;">
                                         @php
-                                            $totalPaguSetelah = 0;
+                                            $totalRealisasi = 0;
                                             foreach ($rekap as $item) {
-                                                $penyesuaian = $simulasiPenyesuaian->where('kode_rekening', $item->kode_rekening);
-                                                $totalPenyesuaian = 0;
-                                                foreach ($penyesuaian as $adj) {
-                                                    if ($adj->operasi == '+') {
-                                                        $totalPenyesuaian += $adj->nilai;
-                                                    } elseif ($adj->operasi == '-') {
-                                                        $totalPenyesuaian -= $adj->nilai;
-                                                    }
-                                                }
-                                                $totalPaguSetelah += ($item->total_pagu + $totalPenyesuaian);
+                                                $totalRealisasi += $realisasiMap[$item->kode_rekening] ?? 0;
                                             }
                                         @endphp
-                                        {{ number_format($totalPaguSetelah, 2, ',', '.') }}
+                                        {{ number_format($totalRealisasi, 2, ',', '.') }}
+                                    </th>
+                                    <th class="text-end" style="font-size:12px;">
+                                        {{ number_format($rekap->sum('total_pagu') - $totalRealisasi, 2, ',', '.') }}
                                     </th>
                                     <th class="text-end" style="font-size:12px;">
                                         @php
@@ -262,6 +213,26 @@
                                         @endphp
                                         {{ number_format($totalPenyesuaianAll, 2, ',', '.') }}
                                     </th>
+                                    <th class="text-end" style="font-size:12px;">
+                                        @php
+                                            $totalProyeksi = 0;
+                                            foreach ($rekap as $item) {
+                                                $realisasi = $realisasiMap[$item->kode_rekening] ?? 0;
+                                                $anggaranRealisasi = $item->total_pagu - $realisasi;
+                                                $penyesuaian = $simulasiPenyesuaian->where('kode_rekening', $item->kode_rekening);
+                                                $totalPenyesuaian = 0;
+                                                foreach ($penyesuaian as $adj) {
+                                                    if ($adj->operasi == '+') {
+                                                        $totalPenyesuaian += $adj->nilai;
+                                                    } elseif ($adj->operasi == '-') {
+                                                        $totalPenyesuaian -= $adj->nilai;
+                                                    }
+                                                }
+                                                $totalProyeksi += ($anggaranRealisasi + $totalPenyesuaian);
+                                            }
+                                        @endphp
+                                        {{ number_format($totalProyeksi, 2, ',', '.') }}
+                                    </th>
                                 </tr>
                             </tfoot>
                         </table>
@@ -274,7 +245,7 @@
                             </div>
                             <div class="table-responsive">
                                 <h5 class="mb-0 text-primary">Data Simulasi Penyesuaian Anggaran</h5>
-                                <table class="table mb-0 align-middle table-sm table-bordered table-striped" style="font-size:12px;">
+                                <table class="table mb-0 align-middle table-sm table-bordered table-striped">
                                     <thead class="table-light">
                                         <tr>
                                             <th style="width: 80px;">Kode OPD</th>
@@ -297,7 +268,7 @@
                                                 @endphp
                                                 {{ $namaRek ?? '-' }}
                                             </td>
-                                            <td class="text-center" style="font-size:16px;">{{ $row->operasi }}</td>
+                                            <td class="text-center">{{ $row->operasi }}</td>
                                             <td class="text-end">{{ number_format($row->nilai, 2, ',', '.') }}</td>
                                             <td style="max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ $row->keterangan }}">{{ \Illuminate\Support\Str::limit($row->keterangan, 40) }}</td>
                                             <td>
@@ -708,7 +679,7 @@
                 body: body,
                 foot: foot,
                 margin: { left: margin, right: margin },
-                styles: { fontSize: 8, cellPadding: 2 },
+                styles: { fontSize: 7, cellPadding: 1.5 },
                 headStyles: { fillColor: [41, 128, 185], textColor: 255 },
                 theme: 'grid',
                 showHead: 'everyPage', // header tetap di setiap halaman

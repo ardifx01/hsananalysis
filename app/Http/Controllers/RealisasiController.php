@@ -14,22 +14,23 @@ class RealisasiController extends Controller
     {
         $query = Realisasi::query();
 
-        // Filter by periode if provided
-        if ($request->has('periode')) {
+        // Only show data if both filters are selected
+        if ($request->has('periode') && $request->has('kode_opd')) {
+            // Filter by periode
             $query->whereYear('periode', substr($request->periode, 0, 4))
                   ->whereMonth('periode', substr($request->periode, 5, 2));
-        }
 
-        // Filter by kode_opd if provided
-        if ($request->has('kode_opd')) {
+            // Filter by kode_opd
             $query->where('kode_opd', $request->kode_opd);
+
+            // Filter kode_rekening with 6 segments (x.x.xx.xx.xx.xxxx)
+            $query->whereRaw("kode_rekening REGEXP '^[0-9]+\\.[0-9]+\\.[0-9]{2}\\.[0-9]{2}\\.[0-9]{2}\\.[0-9]{4}$'");
+
+            $realisasis = $query->orderBy('kode_rekening')
+                               ->get();
+        } else {
+            $realisasis = collect(); // Empty collection when filters are not selected
         }
-
-        // Filter kode_rekening with 6 segments (x.x.xx.xx.xx.xxxx)
-        $query->whereRaw("kode_rekening REGEXP '^[0-9]+\\.[0-9]+\\.[0-9]{2}\\.[0-9]{2}\\.[0-9]{2}\\.[0-9]{4}$'");
-
-        $realisasis = $query->orderBy('kode_rekening')
-                           ->get();
 
         // Get unique OPDs from data_anggaran table
         $opds = DB::table('data_anggarans')

@@ -7,6 +7,7 @@ use App\Models\DataAnggaran;
 use App\Models\Tahapan;
 use App\Models\KodeRekening;
 use App\Models\SimulasiPenyesuaianAnggaran;
+use App\Models\Realisasi;
 
 class SimulasiPerubahanController extends Controller
 {
@@ -56,6 +57,24 @@ class SimulasiPerubahanController extends Controller
                 ->get();
         }
 
+        // Ambil data realisasi untuk SKPD dan mapping berdasarkan kode rekening
+        $realisasiMap = [];
+        $realisasiSegmenMap = [];
+        if ($skpdKode) {
+            $realisasiRows = Realisasi::where('kode_opd', $skpdKode)->get();
+            foreach ($realisasiRows as $row) {
+                $realisasiMap[$row->kode_rekening] = $row->realisasi;
+                $segments = explode('.', $row->kode_rekening);
+                // Hanya rekap realisasi dari kode rekening dengan 6 segmen
+                if (count($segments) === 6) {
+                    $seg2 = $segments[0] . '.' . $segments[1];
+                    $realisasiSegmenMap[$seg2] = ($realisasiSegmenMap[$seg2] ?? 0) + $row->realisasi;
+                    $seg3 = $segments[0] . '.' . $segments[1] . '.' . $segments[2];
+                    $realisasiSegmenMap[$seg3] = ($realisasiSegmenMap[$seg3] ?? 0) + $row->realisasi;
+                }
+            }
+        }
+
         return view('simulasi-perubahan.index', [
             'tahapans' => $tahapans,
             'tahapanId' => $tahapanId,
@@ -66,6 +85,8 @@ class SimulasiPerubahanController extends Controller
             'tahapanTerpilih' => $tahapanTerpilih,
             'kodeRekenings' => $kodeRekenings,
             'simulasiPenyesuaian' => $simulasiPenyesuaian,
+            'realisasiMap' => $realisasiMap,
+            'realisasiSegmenMap' => $realisasiSegmenMap,
         ]);
     }
 
@@ -88,7 +109,14 @@ class SimulasiPerubahanController extends Controller
             // Ambil semua penyesuaian untuk seluruh OPD
             $simulasiPenyesuaian = SimulasiPenyesuaianAnggaran::all();
 
-            // Tambahkan kolom total_pagu_setelah_penyesuaian ke setiap OPD
+            // Ambil total realisasi per OPD (hanya kode rekening 6 segmen)
+            $realisasiPerOpd = \App\Models\Realisasi::select('kode_opd')
+                ->whereRaw('LENGTH(kode_rekening) - LENGTH(REPLACE(kode_rekening, ".", "")) = 5')
+                ->selectRaw('SUM(realisasi) as total_realisasi')
+                ->groupBy('kode_opd')
+                ->pluck('total_realisasi', 'kode_opd');
+
+            // Tambahkan kolom total_pagu_setelah_penyesuaian dan realisasi ke setiap OPD
             foreach ($rekapOpd as $opd) {
                 $penyesuaian = $simulasiPenyesuaian->where('kode_opd', $opd->kode_skpd);
                 $totalPenyesuaian = 0;
@@ -101,6 +129,7 @@ class SimulasiPerubahanController extends Controller
                 }
                 $opd->total_pagu_setelah_penyesuaian = $opd->total_pagu + $totalPenyesuaian;
                 $opd->total_penyesuaian = $totalPenyesuaian;
+                $opd->total_realisasi = $realisasiPerOpd[$opd->kode_skpd] ?? 0;
             }
         }
 

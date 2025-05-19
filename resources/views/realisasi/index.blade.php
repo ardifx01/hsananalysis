@@ -39,6 +39,11 @@
     </div>
     <div class="card-body">
         <div class="table-responsive">
+            @if(!request('periode') || !request('kode_opd'))
+                <div class="alert alert-info">
+                    Silakan pilih periode dan OPD untuk melihat data realisasi.
+                </div>
+            @else
             <table class="table align-middle table-sm table-bordered table-striped" style="font-size: 0.8rem;">
                 <thead class="table-primary">
                     <tr>
@@ -94,6 +99,7 @@
                     @endif
                 </tbody>
             </table>
+            @endif
         </div>
     </div>
 </div>

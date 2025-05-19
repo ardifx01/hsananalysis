@@ -36,26 +36,37 @@
                         <th style="width:120px">Kode OPD</th>
                         <th>Nama OPD</th>
                         <th class="text-end" style="width:180px">Total Pagu</th>
+                        <th class="text-end" style="width:180px">Realisasi</th>
+                        <th class="text-end" style="width:180px">Anggaran-Realisasi</th>
                         <th class="text-end" style="width:180px">Penyesuaian</th>
-                        <th class="text-end" style="width:180px">Pagu Setelah Penyesuaian</th>
+                        <th class="text-end" style="width:180px">Proyeksi Perubahan</th>
                     </tr>
                 </thead>
                 <tbody>
                     @php
                         $totalPenyesuaian = 0;
-                        $totalPaguSetelah = 0;
+                        $totalRealisasi = 0;
+                        $totalAnggaranRealisasi = 0;
                     @endphp
                     @foreach($rekapOpd as $i => $opd)
+                    @php
+                        $anggaranRealisasi = ($opd->total_pagu ?? 0) - ($opd->total_realisasi ?? 0);
+                        $proyeksiPerubahan = $anggaranRealisasi + ($opd->total_penyesuaian ?? 0);
+                    @endphp
                     <tr>
                         <td>{{ $i + 1 }}</td>
                         <td>{{ $opd->kode_skpd }}</td>
                         <td>{{ $opd->nama_skpd }}</td>
                         <td class="text-end">{{ number_format($opd->total_pagu, 2, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($opd->total_realisasi ?? 0, 2, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($anggaranRealisasi, 2, ',', '.') }}</td>
                         <td class="text-end">{{ number_format($opd->total_penyesuaian ?? 0, 2, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($opd->total_pagu_setelah_penyesuaian ?? $opd->total_pagu, 2, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($proyeksiPerubahan, 2, ',', '.') }}</td>
                         @php
                             $totalPenyesuaian += $opd->total_penyesuaian ?? 0;
-                            $totalPaguSetelah += $opd->total_pagu_setelah_penyesuaian ?? $opd->total_pagu;
+                            $totalRealisasi += $opd->total_realisasi ?? 0;
+                            $totalAnggaranRealisasi += $anggaranRealisasi;
+                            $totalProyeksiPerubahan = ($totalProyeksiPerubahan ?? 0) + $proyeksiPerubahan;
                         @endphp
                     </tr>
                     @endforeach
@@ -66,8 +77,10 @@
                         <td></td>
                         <td class="text-end">Total</td>
                         <td class="text-end">{{ number_format($rekapOpd->sum('total_pagu'), 2, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($totalRealisasi, 2, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($totalAnggaranRealisasi, 2, ',', '.') }}</td>
                         <td class="text-end">{{ number_format($totalPenyesuaian, 2, ',', '.') }}</td>
-                        <td class="text-end">{{ number_format($totalPaguSetelah, 2, ',', '.') }}</td>
+                        <td class="text-end">{{ number_format($totalProyeksiPerubahan ?? 0, 2, ',', '.') }}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -164,8 +177,9 @@ function exportToPDF() {
                             { text: 'Kode OPD', style: 'tableHeader' },
                             { text: 'Nama OPD', style: 'tableHeader' },
                             { text: 'Total Pagu', style: 'tableHeader' },
+                            { text: 'Realisasi', style: 'tableHeader' },
                             { text: 'Penyesuaian', style: 'tableHeader' },
-                            { text: 'Pagu Setelah Penyesuaian', style: 'tableHeader' }
+                            { text: 'Proyeksi Perubahan', style: 'tableHeader' }
                         ],
                         // Body
                         ...data.body.map(row => [
@@ -174,7 +188,8 @@ function exportToPDF() {
                             { text: row[2] },
                             { text: row[3], alignment: 'right' },
                             { text: row[4], alignment: 'right' },
-                            { text: row[5], alignment: 'right' }
+                            { text: row[5], alignment: 'right' },
+                            { text: row[6], alignment: 'right' }
                         ]),
                         // Footer
                         [
@@ -183,7 +198,8 @@ function exportToPDF() {
                             {},
                             { text: totalRow[3], alignment: 'right', style: 'tableFooter' },
                             { text: totalRow[4], alignment: 'right', style: 'tableFooter' },
-                            { text: totalRow[5], alignment: 'right', style: 'tableFooter' }
+                            { text: totalRow[5], alignment: 'right', style: 'tableFooter' },
+                            { text: totalRow[6], alignment: 'right', style: 'tableFooter' }
                         ]
                     ]
                 },
