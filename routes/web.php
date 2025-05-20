@@ -155,6 +155,9 @@ Route::middleware('auth')->group(function () {
         Route::resource('realisasi', RealisasiController::class);
         Route::post('/realisasi/upload', [RealisasiController::class, 'upload'])->name('realisasi.upload');
         Route::post('/realisasi/bulk-delete', [RealisasiController::class, 'bulkDelete'])->name('realisasi.bulk-delete');
+
+        // Query Database
+        Route::get('/simulasi-perubahan/query-database', [\App\Http\Controllers\QueryDatabaseController::class, 'index'])->name('query-database');
 });
 
 // ROUTE AUTENTIKASI
