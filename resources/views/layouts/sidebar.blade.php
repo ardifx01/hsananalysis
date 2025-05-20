@@ -284,7 +284,7 @@
                                     fill="currentColor"></path>
                             </svg>
                         </i>
-                        <span class="item-name">Kertas Kerja</span>
+                        <span class="item-name">Kertas Kerja Perubahan</span>
                         <i class="right-icon">
                             <svg class="icon-18" xmlns="http://www.w3.org/2000/svg" width="18" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
@@ -297,10 +297,9 @@
                         <!-- Import Data -->
 
 
-
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('set-rek') ? 'active' : '' }}"
-                                href="{{ route('set-rek') }}">
+                            <a class="nav-link {{ request()->routeIs('calculator-anggaran') ? 'active' : '' }}"
+                                href="{{ route('calculator-anggaran') }}">
                                 <i class="icon">
                                     <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
                                         viewBox="0 0 24 24" fill="currentColor">
@@ -308,40 +307,11 @@
                                             d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
                                     </svg>
                                 </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Set Persentase Rek</span>
+                                <i class="sidenav-mini-icon"> C </i>
+                                <span class="item-name">Calculation</span>
                             </a>
                         </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('simulasi.set-opd-rek') ? 'active' : '' }}"
-                                href="{{ route('simulasi.set-opd-rek') }}">
-                                <i class="icon">
-                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
-                                        viewBox="0 0 24 24" fill="currentColor">
-                                        <path
-                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
-                                    </svg>
-                                </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Set Per OPD Per Rek</span>
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('simulasi.perjalanan-dinas') ? 'active' : '' }}"
-                                href="{{ route('simulasi.perjalanan-dinas') }}">
-                                <i class="icon">
-                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
-                                        viewBox="0 0 24 24" fill="currentColor">
-                                        <path
-                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
-                                    </svg>
-                                </i>
-                                <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Set Rek PD</span>
-                            </a>
-                        </li>
+                        
 
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('simulasi-perubahan.index') ? 'active' : '' }}"
@@ -354,7 +324,7 @@
                                     </svg>
                                 </i>
                                 <i class="sidenav-mini-icon"> P </i>
-                                <span class="item-name">Simulasi Perubahan</span>
+                                <span class="item-name">Simulasi</span>
                             </a>
                         </li>
 
@@ -410,6 +380,50 @@
                     <ul class="sub-nav collapse" id="simulasi-menu" data-bs-parent="#sidebar-menu">
                         <!-- Import Data -->
 
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('set-rek') ? 'active' : '' }}"
+                                href="{{ route('set-rek') }}">
+                                <i class="icon">
+                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
+                                        viewBox="0 0 24 24" fill="currentColor">
+                                        <path
+                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
+                                    </svg>
+                                </i>
+                                <i class="sidenav-mini-icon"> K </i>
+                                <span class="item-name">Set Persentase Rek</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('simulasi.set-opd-rek') ? 'active' : '' }}"
+                                href="{{ route('simulasi.set-opd-rek') }}">
+                                <i class="icon">
+                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
+                                        viewBox="0 0 24 24" fill="currentColor">
+                                        <path
+                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
+                                    </svg>
+                                </i>
+                                <i class="sidenav-mini-icon"> K </i>
+                                <span class="item-name">Set Per OPD Per Rek</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('simulasi.perjalanan-dinas') ? 'active' : '' }}"
+                                href="{{ route('simulasi.perjalanan-dinas') }}">
+                                <i class="icon">
+                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
+                                        viewBox="0 0 24 24" fill="currentColor">
+                                        <path
+                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
+                                    </svg>
+                                </i>
+                                <i class="sidenav-mini-icon"> K </i>
+                                <span class="item-name">Set Rek PD</span>
+                            </a>
+                        </li>
 
 
                         <li class="nav-item">

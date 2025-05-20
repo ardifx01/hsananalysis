@@ -65,37 +65,37 @@
                
                 <li class="nav-item dropdown">
                   <a class="py-0 nav-link d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="../assets/images/avatars/01.png" alt="User-Profile" class="theme-color-default-img img-fluid avatar avatar-50 avatar-rounded">
-                    <img src="../assets/images/avatars/avtar_1.png" alt="User-Profile" class="theme-color-purple-img img-fluid avatar avatar-50 avatar-rounded">
-                    <img src="../assets/images/avatars/avtar_2.png" alt="User-Profile" class="theme-color-blue-img img-fluid avatar avatar-50 avatar-rounded">
-                    <img src="../assets/images/avatars/avtar_4.png" alt="User-Profile" class="theme-color-green-img img-fluid avatar avatar-50 avatar-rounded">
-                    <img src="../assets/images/avatars/avtar_5.png" alt="User-Profile" class="theme-color-yellow-img img-fluid avatar avatar-50 avatar-rounded">
-                    <img src="../assets/images/avatars/avtar_3.png" alt="User-Profile" class="theme-color-pink-img img-fluid avatar avatar-50 avatar-rounded">
-                    <div class="caption ms-3 d-none d-md-block ">
-                        <h6 class="mb-0 caption-title">
-    {{ Auth::check() ? Auth::user()->name : 'Guest' }}
-</h6>
-                        <p class="mb-0 caption-sub-title">Administrator</p>
-                    </div>
+                    @auth
+                        <img src="{{ asset('assets/images/avatars/default-avatar.png') }}" alt="User-Profile" class="img-fluid avatar avatar-50 avatar-rounded">
+                        <div class="caption ms-3 d-none d-md-block">
+                            <h6 class="mb-0 caption-title">{{ Auth::user()->name }}</h6>
+                            <p class="mb-0 caption-sub-title">{{ Auth::user()->role ?? 'User' }}</p>
+                        </div>
+                    @else
+                        <img src="{{ asset('assets/images/avatars/guest-avatar.png') }}" alt="Guest" class="img-fluid avatar avatar-50 avatar-rounded">
+                        <div class="caption ms-3 d-none d-md-block">
+                            <h6 class="mb-0 caption-title">Guest</h6>
+                            <p class="mb-0 caption-sub-title">Please login</p>
+                        </div>
+                    @endauth
                   </a>
                   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                    
-                    <li><hr class="dropdown-divider"></li>
-                   <li>
-    @auth
-        <!-- Jika Sudah Login, Tampilkan Logout -->
-        <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-            Logout
-        </a>
-        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-            @csrf
-        </form>
-    @else
-        <!-- Jika Belum Login, Tampilkan Login -->
-        <a href="{{ route('login') }}">Login</a>
-    @endauth
-</li>
-
+                    @auth
+                        <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="bi bi-person me-2"></i>Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="{{ route('logout') }}" 
+                               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                <i class="bi bi-box-arrow-right me-2"></i>Logout
+                            </a>
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                                @csrf
+                            </form>
+                        </li>
+                    @else
+                        <li><a class="dropdown-item" href="{{ route('login') }}"><i class="bi bi-box-arrow-in-right me-2"></i>Login</a></li>
+                        <li><a class="dropdown-item" href="{{ route('register') }}"><i class="bi bi-person-plus me-2"></i>Register</a></li>
+                    @endauth
                   </ul>
                 </li>
               </ul>

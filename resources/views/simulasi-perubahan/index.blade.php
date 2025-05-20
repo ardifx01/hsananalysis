@@ -45,7 +45,7 @@
                     <!-- Struktur Belanja OPD -->
                     <div class="mb-4 table-responsive" style="max-height: 80vh; overflow-y: auto;">
                         <h5 class="mb-2 text-primary">Struktur Belanja OPD : {{ $skpdTerpilih ? ($skpdTerpilih->kode_skpd . ' - ' . $skpdTerpilih->nama_skpd) : '-' }}</h5>
-                        <table class="table mb-0 align-middle table-sm table-bordered table-striped">
+                        <table class="table mb-0 align-middle table-sm table-bordered table-hover">
                             <thead class="table-light">
                                 <tr>
                                     <th style="width: 120px;">Kode Rekening</th>
@@ -99,7 +99,11 @@
                                         $sumTotalProyeksi += $proyeksiPerubahan;
                                     }
                                 @endphp
-                                <tr>
+                                <tr
+                                    @if(count(explode('.', $kr->kode_rekening)) === 2)
+                                        class="fw-bold bg-light text-dark"
+                                    @endif
+                                >
                                     <td style="max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $kr->kode_rekening }}</td>
                                     <td style="max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ $kr->uraian }}">{{ \Illuminate\Support\Str::limit($kr->uraian, 50) }}</td>
                                     <td class="text-end">{{ $totalPagu ? number_format($totalPagu, 2, ',', '.') : '-' }}</td>
@@ -131,7 +135,7 @@
                     <!-- Rekap Belanja OPD -->
                     <div class="mb-4 table-responsive" style="max-height: 80vh; overflow-y: auto;">
                         <h5 class="mb-2 text-primary">Rekap Belanja OPD : {{ $skpdTerpilih ? ($skpdTerpilih->kode_skpd . ' - ' . $skpdTerpilih->nama_skpd) : '-' }}</h5>
-                        <table class="table align-middle table-sm table-bordered table-striped table-hover" id="rekapTable">
+                        <table class="table align-middle table-sm table-bordered table-hover" id="rekapTable">
                             <thead class="table-primary">
                                 <tr>
                                     <th style="width:40px">No</th>
