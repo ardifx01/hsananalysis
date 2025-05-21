@@ -54,8 +54,8 @@
                                     <th>OPD</th>
                                     <th>Kode Rekening</th>
                                     <th>Nama Rekening</th>
+                                    <th>Uraian</th>
                                     <th class="text-end">Anggaran</th>
-                                    <th class="text-end">Sisa</th>
                                     <th class="text-center">Aksi</th>
                                 </tr>
                             </thead>
@@ -64,9 +64,8 @@
                             </tbody>
                             <tfoot>
                                 <tr class="fw-bold">
-                                    <td colspan="3">Total</td>
+                                    <td colspan="4">Total</td>
                                     <td class="text-end" id="total-anggaran">-</td>
-                                    <td class="text-end" id="total-sisa">-</td>
                                     <td></td>
                                 </tr>
                             </tfoot>
@@ -97,19 +96,17 @@ $(document).ready(function() {
     function updateTable(data) {
         let tableHtml = '';
         let totalAnggaran = 0;
-        let totalSisa = 0;
 
         data.forEach(function(item) {
             totalAnggaran += item.anggaran;
-            totalSisa += item.sisa;
 
             tableHtml += `
                 <tr>
                     <td>${item.nama_skpd}</td>
                     <td>${item.kode_rekening}</td>
                     <td>${item.nama_rekening}</td>
+                    <td>${item.nama_standar_harga ?? '-'}</td>
                     <td class="text-end">${formatRupiah(item.anggaran)}</td>
-                    <td class="text-end">${formatRupiah(item.sisa)}</td>
                     <td class="text-center">
                         <button class="btn btn-sm btn-primary" onclick="calculate('${item.kode_rekening}')">
                             <i class="bi bi-calculator"></i> Hitung
@@ -121,7 +118,6 @@ $(document).ready(function() {
 
         // Update total
         $('#total-anggaran').text(formatRupiah(totalAnggaran));
-        $('#total-sisa').text(formatRupiah(totalSisa));
 
         $('#data-table tbody').html(tableHtml);
         // Destroy and re-init DataTable
