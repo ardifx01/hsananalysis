@@ -51,12 +51,25 @@
                         <table class="table table-hover" id="data-table">
                             <thead>
                                 <tr>
-                                    <th>OPD</th>
+                                    <th>Kode Sub Kegiatan</th>
+                                    <th>Nama Sub Kegiatan</th>
                                     <th>Kode Rekening</th>
                                     <th>Nama Rekening</th>
+                                    <th>Kode Standar Harga</th>
                                     <th>Uraian</th>
-                                    <th class="text-end">Anggaran</th>
-                                    <th class="text-center">Aksi</th>
+                                    <th class="text-end">Pagu</th>
+                                </tr>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th><input type="text" placeholder="Cari Nama Rekening" class="form-control form-control-sm column-search" data-col="3"></th>
+                                    <th></th>
+                                    <th>
+                                        <input type="text" placeholder="Cari Uraian" class="form-control form-control-sm column-search" data-col="5" id="uraian-filter">
+                                        <label class="small ms-1"><input type="checkbox" id="uraian-exclude"> Jangan tampilkan data ini</label>
+                                    </th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -64,9 +77,8 @@
                             </tbody>
                             <tfoot>
                                 <tr class="fw-bold">
-                                    <td colspan="4">Total</td>
+                                    <td colspan="6">Total</td>
                                     <td class="text-end" id="total-anggaran">-</td>
-                                    <td></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -76,6 +88,38 @@
         </div>
     </div>
 </div>
+
+<!-- Floating total container -->
+<div id="floating-total" class="p-3 text-white rounded shadow bg-primary" style="position:fixed;left:20px;bottom:20px;z-index:9999;min-width:220px;font-size:1.2em;opacity:0.95;">
+    Total Pagu: <span id="floating-total-value">Rp0</span>
+    <button id="copy-total-btn" class="btn btn-light btn-sm ms-2" title="Copy ke clipboard">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+            <path d="M10 1.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1A1.5 1.5 0 0 0 4.5 3H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-.5A1.5 1.5 0 0 0 10 1.5zm-4 0A.5.5 0 0 1 6.5 1h3a.5.5 0 0 1 .5.5v1h-4v-1z"/>
+        </svg>
+    </button>
+    <span id="copy-feedback" class="ms-2" style="display:none;">Copied!</span>
+</div>
+
+<style>
+#floating-total {
+    transition: background 0.2s;
+}
+#data-table {
+    font-size: 12px;
+}
+#data-table th, #data-table td {
+    padding: 4px 8px !important;
+    vertical-align: middle;
+}
+.max-ellipsis {
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    vertical-align: middle;
+}
+</style>
 
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
@@ -93,46 +137,67 @@ $(document).ready(function() {
         return angka.toFixed(2) + '%';
     }
 
+    let dataTableInstance = null;
     function updateTable(data) {
-        let tableHtml = '';
-        let totalAnggaran = 0;
-
-        data.forEach(function(item) {
-            totalAnggaran += item.anggaran;
-
-            tableHtml += `
-                <tr>
-                    <td>${item.nama_skpd}</td>
-                    <td>${item.kode_rekening}</td>
-                    <td>${item.nama_rekening}</td>
-                    <td>${item.nama_standar_harga ?? '-'}</td>
-                    <td class="text-end">${formatRupiah(item.anggaran)}</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-primary" onclick="calculate('${item.kode_rekening}')">
-                            <i class="bi bi-calculator"></i> Hitung
-                        </button>
-                    </td>
-                </tr>
-            `;
+        // Siapkan data array untuk DataTables
+        let dataArray = data.map(function(item) {
+            // Trim nama sub kegiatan dan uraian
+            let namaSubKeg = (item.nama_sub_kegiatan ?? '-');
+            let namaSubKegShort = namaSubKeg.length > 40 ? namaSubKeg.slice(0, 40) + '…' : namaSubKeg;
+            let uraian = (item.nama_standar_harga ?? '-');
+            let uraianShort = uraian.length > 40 ? uraian.slice(0, 40) + '…' : uraian;
+            return [
+                item.kode_sub_kegiatan ?? '-',
+                `<span class='max-ellipsis' title='${namaSubKeg.replace(/'/g, '&apos;')}'>${namaSubKegShort}</span>`,
+                item.kode_rekening ?? '-',
+                item.nama_rekening ?? '-',
+                item.kode_standar_harga ?? '-',
+                `<span class='max-ellipsis' title='${uraian.replace(/'/g, '&apos;')}'>${uraianShort}</span>`,
+                '<span class="text-end">' + formatRupiah(item.anggaran) + '</span>'
+            ];
         });
-
-        // Update total
-        $('#total-anggaran').text(formatRupiah(totalAnggaran));
-
-        $('#data-table tbody').html(tableHtml);
-        // Destroy and re-init DataTable
-        if ($.fn.DataTable.isDataTable('#data-table')) {
-            $('#data-table').DataTable().destroy();
+        if (!dataTableInstance) {
+            dataTableInstance = $('#data-table').DataTable({
+                data: dataArray,
+                paging: false,
+                searching: true,
+                ordering: true,
+                order: [[0, 'asc']],
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json'
+                },
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.header()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that.search(this.value).draw();
+                            }
+                        });
+                    });
+                }
+            });
+            dataTableInstance.on('draw', function() {
+                updateFooterTotal();
+            });
+        } else {
+            dataTableInstance.clear();
+            dataTableInstance.rows.add(dataArray).draw();
         }
-        $('#data-table').DataTable({
-            paging: true,
-            searching: true,
-            ordering: true,
-            order: [[1, 'asc']], // default order by kode rekening
-            language: {
-                url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json'
-            }
-        });
+        updateFooterTotal();
+    }
+    function updateFooterTotal() {
+        let total = 0;
+        if (dataTableInstance) {
+            dataTableInstance.rows({ search: 'applied' }).every(function() {
+                let data = this.data();
+                // Kolom pagu ada di index ke-6
+                let pagu = $(data[6]).text().replace(/[^0-9,-]+/g,"").replace(",",".");
+                total += parseFloat(pagu) || 0;
+            });
+        }
+        $('#total-anggaran').text(formatRupiah(total));
+        $('#floating-total-value').text(formatRupiah(total));
     }
 
     // Event Submit Filter Form
@@ -140,6 +205,11 @@ $(document).ready(function() {
         e.preventDefault();
         let tahapan = $('#tahapan').val();
         let opd = $('#opd').val();
+        if (!opd) {
+            // Kosongkan tabel jika OPD belum dipilih
+            updateTable([]);
+            return;
+        }
         fetchData(tahapan, opd);
     });
 
@@ -147,9 +217,8 @@ $(document).ready(function() {
     $('#reset-filter').on('click', function(e) {
         e.preventDefault();
         $('#filter-form')[0].reset();
-        // Set kembali tahapan default
-        $('#tahapan').val('{{ $defaultTahapan ? $defaultTahapan->id : "" }}');
-        fetchData();
+        // Kosongkan tabel jika reset
+        updateTable([]);
     });
 
     // Fetch data
@@ -177,8 +246,53 @@ $(document).ready(function() {
         });
     }
 
-    // Initial load
-    fetchData();
+    // Initial load: kosongkan tabel
+    updateTable([]);
+
+    // DataTables custom filter untuk exclude uraian
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        var uraianFilter = $('#uraian-filter').val().toLowerCase();
+        var uraianExclude = $('#uraian-exclude').is(':checked');
+        var uraianValue = (data[5] || '').toLowerCase();
+        if (uraianFilter) {
+            if (uraianExclude) {
+                // Exclude: jika uraianValue mengandung filter, hide row
+                return uraianValue.indexOf(uraianFilter) === -1;
+            } else {
+                // Include: default behavior
+                return uraianValue.indexOf(uraianFilter) !== -1;
+            }
+        }
+        return true;
+    });
+    // Cegah sorting pada input filter (hanya event mousedown dan click)
+    $(document).on('mousedown click', 'thead input', function(e) {
+        e.stopImmediatePropagation();
+        e.stopPropagation();
+    });
+    // Jika pengecualian dicentang, kosongkan filter kolom DataTables untuk kolom Uraian
+    $(document).on('change', '#uraian-exclude', function() {
+        if (this.checked && dataTableInstance) {
+            dataTableInstance.column(5).search('').draw();
+        }
+        updateFooterTotal();
+    });
+    // Trigger redraw dan update total saat filter kolom lain digunakan
+    $(document).on('keyup change', '.column-search', function() {
+        if (dataTableInstance) {
+            dataTableInstance.draw();
+            updateFooterTotal();
+        }
+    });
+
+    $('#copy-total-btn').on('click', function() {
+        let value = $('#floating-total-value').text();
+        // Ambil hanya angka dan koma/desimal, hilangkan Rp, titik, spasi
+        value = value.replace(/[^0-9,]/g, '').replace(',', '.');
+        navigator.clipboard.writeText(value).then(function() {
+            $('#copy-feedback').fadeIn(200).delay(800).fadeOut(400);
+        });
+    });
 });
 
 // Function untuk kalkulasi (akan diimplementasikan nanti)

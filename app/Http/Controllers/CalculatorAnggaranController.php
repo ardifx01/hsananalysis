@@ -51,40 +51,44 @@ class CalculatorAnggaranController extends Controller
             // Jika OPD dipilih, tampilkan detail per OPD
             if ($request->filled('opd')) {
                 $query->where('da.kode_skpd', $request->opd);
-                
                 $query->select(
                     'da.kode_skpd',
                     'da.nama_skpd',
+                    'da.kode_sub_kegiatan',
+                    'da.nama_sub_kegiatan',
                     'da.kode_rekening',
                     'da.nama_rekening',
+                    'da.kode_standar_harga',
+                    'da.nama_standar_harga',
                     DB::raw('SUM(da.pagu) as anggaran')
                 )
-                ->groupBy('da.kode_skpd', 'da.nama_skpd', 'da.kode_rekening', 'da.nama_rekening')
-                ->orderBy('da.kode_rekening', 'asc');
+                ->groupBy(
+                    'da.kode_skpd',
+                    'da.nama_skpd',
+                    'da.kode_sub_kegiatan',
+                    'da.nama_sub_kegiatan',
+                    'da.kode_rekening',
+                    'da.nama_rekening',
+                    'da.kode_standar_harga',
+                    'da.nama_standar_harga'
+                )
+                ->orderBy('da.kode_sub_kegiatan')
+                ->orderBy('da.kode_rekening')
+                ->orderBy('da.kode_standar_harga');
+                $data = $query->get()->map(function ($item) {
+                    return [
+                        'kode_sub_kegiatan' => $item->kode_sub_kegiatan,
+                        'nama_sub_kegiatan' => $item->nama_sub_kegiatan,
+                        'kode_rekening' => $item->kode_rekening,
+                        'nama_rekening' => $item->nama_rekening,
+                        'kode_standar_harga' => $item->kode_standar_harga,
+                        'nama_standar_harga' => $item->nama_standar_harga,
+                        'anggaran' => $item->anggaran,
+                    ];
+                });
             } else {
-                // Jika OPD tidak dipilih, tampilkan akumulasi per kode rekening
-                $query->select(
-                    DB::raw('"Semua OPD" as nama_skpd'),
-                    'da.kode_rekening',
-                    'da.nama_rekening',
-                    DB::raw('SUM(da.pagu) as anggaran')
-                )
-                ->groupBy('da.kode_rekening', 'da.nama_rekening')
-                ->orderBy('da.kode_rekening', 'asc');
+                $data = collect([]); // Data kosong jika OPD tidak dipilih
             }
-
-            $data = $query->get();
-
-            $data = $data->map(function ($item) {
-                $sisa = $item->anggaran; // Karena realisasi tidak ada di sini
-                return [
-                    'nama_skpd' => $item->nama_skpd,
-                    'kode_rekening' => $item->kode_rekening,
-                    'nama_rekening' => $item->nama_rekening,
-                    'anggaran' => $item->anggaran,
-                    'sisa' => $sisa
-                ];
-            });
 
             return response()->json([
                 'data' => $data
