@@ -22,7 +22,7 @@ class CalculatorAnggaranController extends Controller
         $skpds = DB::table('data_anggarans')
             ->select('kode_skpd', 'nama_skpd')
             ->distinct()
-            ->orderBy('nama_skpd')
+            ->orderBy('kode_skpd')
             ->get();
 
         return view('simulasi-perubahan.calculator-anggaran', compact('tahapans', 'skpds', 'defaultTahapan'));
