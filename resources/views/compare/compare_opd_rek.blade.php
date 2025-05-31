@@ -191,7 +191,35 @@
                     text: '📊 Export Excel',
                     title: 'Perbandingan Belanja Rekening per SKPD',
                     exportOptions: {
-                        columns: ':visible'
+                        columns: ':visible',
+                        format: {
+                            body: function(data, row, column, node) {
+                                // Jika kolom berisi angka (kolom pagu dan selisih)
+                                if (column >= 3 && column <= dataTable.columns().count() - 3) {
+                                    // Hapus semua karakter non-angka kecuali koma dan titik
+                                    return data.replace(/[^\d,.-]/g, '').replace(',', '.');
+                                }
+                                return data;
+                            }
+                        }
+                    },
+                    customize: function(xlsx) {
+                        var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                        
+                        // Set lebar kolom
+                        $('row:first c', sheet).attr('s', '2'); // Header style
+                        
+                        // Format angka untuk kolom-kolom yang berisi nilai
+                        $('row:not(:first) c', sheet).each(function() {
+                            var cell = $(this);
+                            var colIndex = cell.attr('r').match(/\d+/)[0];
+                            
+                            // Jika kolom berisi angka (kolom pagu dan selisih)
+                            if (colIndex >= 4 && colIndex <= dataTable.columns().count() - 2) {
+                                cell.attr('s', '2'); // Style untuk angka
+                                cell.attr('t', 'n'); // Tipe cell number
+                            }
+                        });
                     }
                 },
                 {
