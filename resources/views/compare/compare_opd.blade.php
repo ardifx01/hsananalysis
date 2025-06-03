@@ -81,7 +81,10 @@
                         <th  style="text-align: center;">Kode OPD</th>
                         <th class="nama-opd" style="text-align: center;">Nama OPD</th>
                         @foreach($rekap->first() as $data)
-                            <th style="text-align: center;">{{ optional($tahapans->find($data->tahapan_id))->name }}<br><span style="font-size:10px">{{ $data->tanggal_upload }}<br>{{ $data->jam_upload }}</span></th>
+                            <th style="text-align: center;">
+                                {{ $tahapans->where('id', $data->tahapan_id)->first()->name ?? '' }}<br>
+                                <span style="font-size:10px">{{ $data->tanggal_upload }}<br>{{ $data->jam_upload }}</span>
+                            </th>
                         @endforeach
                         <th  style="text-align: center;">Selisih</th>
                         <th  style="text-align: center;">Persentase</th>
@@ -138,6 +141,21 @@
         if (tableElement.length && tableElement.find('tbody tr').length > 0) {
             console.log("Tabel ditemukan, DataTables akan diinisialisasi.");
             
+            function fillDropdownSelisih() {
+                let headerCells = $('#rekapTable thead tr').eq(0).find('th');
+                let options = '';
+                headerCells.each(function(i) {
+                    // Hanya kolom data (bukan No, Kode OPD, Nama OPD, Selisih, Persentase)
+                    if (i > 2 && i < headerCells.length - 2) {
+                        let label = this.childNodes[0] ? this.childNodes[0].textContent.trim() : $(this).text().trim();
+                        options += `<option value="${i}">${label}</option>`;
+                    }
+                });
+                $('#minuend-col, #subtrahend-col').html(options);
+                $('#minuend-col').val(headerCells.length - 4); // Default: kolom terakhir sebelum Selisih
+                $('#subtrahend-col').val(3); // Default: kolom pertama data
+            }
+
             var table = tableElement.DataTable({
                 paging: false,
                 searching: true,
@@ -213,25 +231,18 @@
                         previous: "Sebelumnya"
                     }
                 },
+                initComplete: function() {
+                    fillDropdownSelisih();
+                    updateSelisih();
+                },
                 drawCallback: function(settings) {
-                    table.column(0).nodes().each(function(cell, i) {
+                    var api = this.api();
+                    api.column(0).nodes().each(function(cell, i) {
                         cell.innerHTML = i + 1;
                     });
+                    fillDropdownSelisih();
                 }
             });
-
-            // --- Fitur Selisih Dinamis ---
-            let headerCells = $('#rekapTable thead tr').eq(0).find('th');
-            let options = '';
-            headerCells.each(function(i) {
-                // Hanya kolom data (bukan No, Kode OPD, Nama OPD, Selisih, Persentase)
-                if (i > 2 && i < headerCells.length - 2) {
-                    options += `<option value="${i}">${$(this).text().split('\n')[0]}</option>`;
-                }
-            });
-            $('#minuend-col, #subtrahend-col').html(options);
-            $('#minuend-col').val(headerCells.length - 4); // Default: kolom terakhir sebelum Selisih
-            $('#subtrahend-col').val(3); // Default: kolom pertama data
 
             function updateSelisih() {
                 let minCol = parseInt($('#minuend-col').val());
@@ -259,7 +270,6 @@
 
             $('#hitung-selisih').on('click', updateSelisih);
             $('#minuend-col, #subtrahend-col').on('change', updateSelisih);
-            updateSelisih();
             // --- END Fitur Selisih Dinamis ---
         } else {
             console.warn("Tabel tidak memiliki data, DataTables tidak diinisialisasi.");
