@@ -84,6 +84,13 @@
     <div class="card-body">
         @if($rekap->isNotEmpty())
         <div class="table-container">
+            <div class="mb-2">
+                Hitung Selisih:
+                <select id="minuend-col"></select>
+                &minus;
+                <select id="subtrahend-col"></select>
+                <button id="hitung-selisih" class="btn btn-sm btn-primary ms-2">Hitung</button>
+            </div>
             <table id="rekapTable" class="table table-striped table-bordered">
                 <thead>
                     <tr>
@@ -227,6 +234,36 @@
                 cell.innerHTML = i + 1;
             });
         }).draw();
+
+        // --- Fitur Selisih Dinamis ---
+        // Ambil header kolom dinamis (kecuali No, Kode Rekening, Nama Rekening, Selisih, Persentase)
+        let headerCells = $('#rekapTable thead tr').eq(0).find('th');
+        let options = '';
+        headerCells.each(function(i) {
+            // Hanya kolom data (bukan No, Kode Rekening, Nama Rekening, Selisih, Persentase)
+            if (i > 2 && i < headerCells.length - 2) {
+                options += `<option value="${i}">${$(this).text().split('\n')[0]}</option>`;
+            }
+        });
+        $('#minuend-col, #subtrahend-col').html(options);
+        $('#minuend-col').val(headerCells.length - 4); // Default: kolom terakhir sebelum Selisih
+        $('#subtrahend-col').val(3); // Default: kolom pertama data
+
+        function updateSelisih() {
+            let minCol = parseInt($('#minuend-col').val());
+            let subCol = parseInt($('#subtrahend-col').val());
+            $('#rekapTable tbody tr').each(function() {
+                let minVal = parseFloat($(this).find('td').eq(minCol).text().replace(/\./g, '').replace(',', '.')) || 0;
+                let subVal = parseFloat($(this).find('td').eq(subCol).text().replace(/\./g, '').replace(',', '.')) || 0;
+                let selisih = minVal - subVal;
+                $(this).find('td.selisih-pagu').text(selisih.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+            });
+        }
+
+        $('#hitung-selisih').on('click', updateSelisih);
+        $('#minuend-col, #subtrahend-col').on('change', updateSelisih);
+        updateSelisih();
+        // --- END Fitur Selisih Dinamis ---
     });
 </script>
 
