@@ -103,6 +103,23 @@
                 ['tanggal_upload', 'asc'],
                 ['jam_upload', 'asc'],
             ])->values();
+
+            // Hitung total untuk setiap kolom
+            $columnTotals = [];
+            foreach ($allColumns as $col) {
+                $key = $col['tahapan_id'].'_'.str_replace('-', '_', $col['tanggal_upload']).'_'.str_replace(':', '_', $col['jam_upload']);
+                $columnTotals[$key] = 0;
+            }
+
+            // Hitung total dari semua data
+            foreach ($rekap as $data) {
+                foreach ($data as $item) {
+                    $key = $item->tahapan_id.'_'.str_replace('-', '_', $item->tanggal_upload).'_'.str_replace(':', '_', $item->jam_upload);
+                    if (isset($columnTotals[$key])) {
+                        $columnTotals[$key] += $item->total_pagu;
+                    }
+                }
+            }
         @endphp
         <div class="table-container">
             <div class="mb-2">
@@ -134,9 +151,6 @@
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $kode_rekening }}</td>
                         <td class="nama-rekening">{{ $data->first()->nama_rekening }}</td>
-                        @php
-                            $totalPagu = [];
-                        @endphp
                         @foreach($allColumns as $col)
                             @php
                                 $item = $data->first(function($d) use ($col) {
@@ -145,7 +159,6 @@
                                         && $d->jam_upload == $col['jam_upload'];
                                 });
                                 $key = $col['tahapan_id'].'_'.str_replace('-', '_', $col['tanggal_upload']).'_'.str_replace(':', '_', $col['jam_upload']);
-                                $totalPagu[$key] = ($item ? $item->total_pagu : 0);
                             @endphp
                             <td class="total-pagu-{{ $key }}">
                                 {{ $item ? number_format($item->total_pagu, 2, ',', '.') : '' }}
@@ -164,7 +177,7 @@
                                 $key = $col['tahapan_id'].'_'.str_replace('-', '_', $col['tanggal_upload']).'_'.str_replace(':', '_', $col['jam_upload']);
                             @endphp
                             <th id="totalPagu{{ $key }}">
-                                {{ number_format($totalPagu[$key] ?? 0, 2, ',', '.') }}
+                                {{ number_format($columnTotals[$key], 2, ',', '.') }}
                             </th>
                         @endforeach
                         <th id="totalSelisihPagu">{{ number_format($totalSelisihPagu, 2, ',', '.') }}</th>
@@ -252,7 +265,9 @@
         let options = '';
         headerCells.each(function(i) {
             if (i > 2 && i < headerCells.length - 2) {
-                options += `<option value="${i}">${$(this).text().split('\n')[0]}</option>`;
+                let headerText = $(this).text().trim();
+                let tahapanName = headerText.split('\n')[0];
+                options += `<option value="${i}">${tahapanName}</option>`;
             }
         });
         $('#minuend-col, #subtrahend-col').html(options);
