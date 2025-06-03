@@ -54,9 +54,9 @@
     }
 
     .nama-rekening {
-        max-width: 150px; /* Atur ukuran kolom Nama Rekening */
-        white-space: normal; /* Wrap text */
-        word-wrap: break-word; /* Wrap text */
+        max-width: 150px;
+        white-space: normal;
+        word-wrap: break-word;
     }
 </style>
 
@@ -83,6 +83,27 @@
 
     <div class="card-body">
         @if($rekap->isNotEmpty())
+        @php
+            // Kumpulkan semua kombinasi kolom dinamis
+            $allColumns = collect();
+            foreach ($rekap as $data) {
+                foreach ($data as $item) {
+                    $allColumns->push([
+                        'tahapan_id' => $item->tahapan_id,
+                        'tanggal_upload' => $item->tanggal_upload,
+                        'jam_upload' => $item->jam_upload,
+                    ]);
+                }
+            }
+            // Unik dan urutkan
+            $allColumns = $allColumns->unique(function($item) {
+                return $item['tahapan_id'].'_'.$item['tanggal_upload'].'_'.$item['jam_upload'];
+            })->sortBy([
+                ['tahapan_id', 'asc'],
+                ['tanggal_upload', 'asc'],
+                ['jam_upload', 'asc'],
+            ])->values();
+        @endphp
         <div class="table-container">
             <div class="mb-2">
                 Hitung Selisih:
@@ -94,44 +115,42 @@
             <table id="rekapTable" class="table table-striped table-bordered">
                 <thead>
                     <tr>
-                        <th  style="text-align: center;">No</th> <!-- Kolom Nomor Urut -->
-                        <th  style="text-align: center;">Kode Rekening</th>
+                        <th style="text-align: center;">No</th>
+                        <th style="text-align: center;">Kode Rekening</th>
                         <th class="nama-rekening" style="text-align: center;">Nama Rekening</th>
-                        @php
-                            $headerCount = 0; // To track column count
-                        @endphp
-                        @foreach($rekap->first() as $data)
-                            <th style="text-align: center;">{{ optional($tahapans->find($data->tahapan_id))->name }}<br><span style="font-size:10px">{{ $data->tanggal_upload }}<br>{{ $data->jam_upload }}</span></th>
-                            @php $headerCount++; @endphp
+                        @foreach($allColumns as $col)
+                            <th style="text-align: center;">
+                                {{ optional($tahapans->find($col['tahapan_id']))->name }}<br>
+                                <span style="font-size:10px">{{ $col['tanggal_upload'] }}<br>{{ $col['jam_upload'] }}</span>
+                            </th>
                         @endforeach
-                        <th  style="text-align: center;">Selisih</th>
-                        <th  style="text-align: center;">Persentase Selisih</th>
+                        <th style="text-align: center;">Selisih</th>
+                        <th style="text-align: center;">Persentase Selisih</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($rekap as $kode_rekening => $data)
                     <tr>
-                        <td>{{ $loop->iteration }}</td> <!-- Nomor Urut Manual -->
+                        <td>{{ $loop->iteration }}</td>
                         <td>{{ $kode_rekening }}</td>
                         <td class="nama-rekening">{{ $data->first()->nama_rekening }}</td>
                         @php
-                            $itemCount = 0; // To ensure column count matches header
+                            $totalPagu = [];
                         @endphp
-                        @foreach($data as $item)
-                            <td class="total-pagu-{{ $item->tahapan_id }}-{{ $item->tanggal_upload }}-{{ $item->jam_upload }}">
-                                {{ number_format($item->total_pagu, 2, ',', '.') }}
+                        @foreach($allColumns as $col)
+                            @php
+                                $item = $data->first(function($d) use ($col) {
+                                    return $d->tahapan_id == $col['tahapan_id'] 
+                                        && $d->tanggal_upload == $col['tanggal_upload'] 
+                                        && $d->jam_upload == $col['jam_upload'];
+                                });
+                                $key = $col['tahapan_id'].'_'.str_replace('-', '_', $col['tanggal_upload']).'_'.str_replace(':', '_', $col['jam_upload']);
+                                $totalPagu[$key] = ($item ? $item->total_pagu : 0);
+                            @endphp
+                            <td class="total-pagu-{{ $key }}">
+                                {{ $item ? number_format($item->total_pagu, 2, ',', '.') : '' }}
                             </td>
-                            @php $itemCount++; @endphp
                         @endforeach
-                        
-                        @php
-                            // Add empty cells if needed to match header count
-                            while($itemCount < $headerCount) {
-                                echo '<td></td>';
-                                $itemCount++;
-                            }
-                        @endphp
-                        
                         <td class="selisih-pagu">{{ number_format($selisihPagu[$kode_rekening], 2, ',', '.') }}</td>
                         <td class="persentase-selisih-pagu">{{ number_format($persentaseSelisihPagu[$kode_rekening], 2, ',', '.') }}%</td>
                     </tr>
@@ -140,24 +159,14 @@
                 <tfoot>
                     <tr class="table-dark">
                         <th colspan="3" class="text-end">Total:</th>
-                        @php 
-                            $footerCount = 0;
-                        @endphp
-                        @foreach($rekap->first() as $data)
-                            <th id="totalPagu{{ $data->tahapan_id }}-{{ $data->tanggal_upload }}-{{ $data->jam_upload }}">
-                                {{ number_format($totalPagu[$data->tahapan_id . '_' . str_replace('-', '_', $data->tanggal_upload) . '_' . str_replace(':', '_', $data->jam_upload)], 2, ',', '.') }}
+                        @foreach($allColumns as $col)
+                            @php
+                                $key = $col['tahapan_id'].'_'.str_replace('-', '_', $col['tanggal_upload']).'_'.str_replace(':', '_', $col['jam_upload']);
+                            @endphp
+                            <th id="totalPagu{{ $key }}">
+                                {{ number_format($totalPagu[$key] ?? 0, 2, ',', '.') }}
                             </th>
-                            @php $footerCount++; @endphp
                         @endforeach
-                        
-                        @php
-                            // Add empty cells if needed to match header count
-                            while($footerCount < $headerCount) {
-                                echo '<th></th>';
-                                $footerCount++;
-                            }
-                        @endphp
-                        
                         <th id="totalSelisihPagu">{{ number_format($totalSelisihPagu, 2, ',', '.') }}</th>
                         <th id="totalPersentaseSelisihPagu">{{ number_format($totalPersentaseSelisihPagu, 2, ',', '.') }}%</th>
                     </tr>
@@ -182,7 +191,6 @@
 
 <script>
     $(document).ready(function() {
-        // Basic initialization first, then add features
         var dataTable = $('#rekapTable').DataTable({
             paging: false,
             searching: true,
@@ -201,15 +209,12 @@
                         columns: ':visible',
                         format: {
                             body: function(data, row, column, node) {
-                                // Kolom Selisih (dinamis)
                                 if ($(node).hasClass('selisih-pagu')) {
                                     return $(node).text().replace(/\./g, '').replace(',', '.');
                                 }
-                                // Kolom Persentase Selisih (dinamis)
                                 if ($(node).hasClass('persentase-selisih-pagu')) {
                                     return $(node).text().replace('%','').replace(',','.');
                                 }
-                                // Kolom angka lain
                                 if (column >= 3) {
                                     let clean = ('' + data)
                                         .replace(/\s/g, '')
@@ -218,7 +223,6 @@
                                         .replace(/,/g, '.');
                                     return clean !== '' && !isNaN(clean) ? clean : '';
                                 }
-                                // Kolom lain
                                 return typeof data === 'string' ? data.replace(/<[^>]*>?/gm, '') : data;
                             }
                         }
@@ -237,47 +241,45 @@
             ]
         });
         
-        // Update row numbers manually
         dataTable.on('order.dt search.dt', function() {
             dataTable.column(0, {search:'applied', order:'applied'}).nodes().each(function(cell, i) {
                 cell.innerHTML = i + 1;
             });
         }).draw();
 
-        // --- Fitur Selisih Dinamis ---
-        // Ambil header kolom dinamis (kecuali No, Kode Rekening, Nama Rekening, Selisih, Persentase)
+        // Fill dropdowns for selisih calculation
         let headerCells = $('#rekapTable thead tr').eq(0).find('th');
         let options = '';
         headerCells.each(function(i) {
-            // Hanya kolom data (bukan No, Kode Rekening, Nama Rekening, Selisih, Persentase)
             if (i > 2 && i < headerCells.length - 2) {
                 options += `<option value="${i}">${$(this).text().split('\n')[0]}</option>`;
             }
         });
         $('#minuend-col, #subtrahend-col').html(options);
-        $('#minuend-col').val(headerCells.length - 4); // Default: kolom terakhir sebelum Selisih
-        $('#subtrahend-col').val(3); // Default: kolom pertama data
+        $('#minuend-col').val(headerCells.length - 4);
+        $('#subtrahend-col').val(3);
 
         function updateSelisih() {
             let minCol = parseInt($('#minuend-col').val());
             let subCol = parseInt($('#subtrahend-col').val());
             let totalSelisih = 0;
             let totalPersen = 0, count = 0;
+            
             $('#rekapTable tbody tr').each(function() {
                 let minVal = parseFloat($(this).find('td').eq(minCol).text().replace(/\./g, '').replace(',', '.')) || 0;
                 let subVal = parseFloat($(this).find('td').eq(subCol).text().replace(/\./g, '').replace(',', '.')) || 0;
                 let selisih = minVal - subVal;
+                
                 $(this).find('td.selisih-pagu').text(selisih.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
                 totalSelisih += selisih;
-                // Hitung persentase selisih
+                
                 let persentase = subVal !== 0 ? (selisih / subVal) * 100 : 0;
                 $(this).find('td.persentase-selisih-pagu').text(persentase.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '%');
                 totalPersen += persentase;
                 count++;
             });
-            // Update total di footer
+            
             $('#totalSelisihPagu').text(totalSelisih.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
-            // Update total persentase di footer (rata-rata)
             let avgPersen = count > 0 ? totalPersen / count : 0;
             $('#totalPersentaseSelisihPagu').text(avgPersen.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '%');
         }
@@ -285,7 +287,6 @@
         $('#hitung-selisih').on('click', updateSelisih);
         $('#minuend-col, #subtrahend-col').on('change', updateSelisih);
         updateSelisih();
-        // --- END Fitur Selisih Dinamis ---
     });
 </script>
 
