@@ -252,12 +252,16 @@
         function updateSelisih() {
             let minCol = parseInt($('#minuend-col').val());
             let subCol = parseInt($('#subtrahend-col').val());
+            let totalSelisih = 0;
             $('#rekapTable tbody tr').each(function() {
                 let minVal = parseFloat($(this).find('td').eq(minCol).text().replace(/\./g, '').replace(',', '.')) || 0;
                 let subVal = parseFloat($(this).find('td').eq(subCol).text().replace(/\./g, '').replace(',', '.')) || 0;
                 let selisih = minVal - subVal;
                 $(this).find('td.selisih-pagu').text(selisih.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                totalSelisih += selisih;
             });
+            // Update total di footer
+            $('#totalSelisihPagu').text(totalSelisih.toLocaleString('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
         }
 
         $('#hitung-selisih').on('click', updateSelisih);
