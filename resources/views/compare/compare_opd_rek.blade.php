@@ -201,15 +201,24 @@
                         columns: ':visible',
                         format: {
                             body: function(data, row, column, node) {
+                                // Kolom Selisih (dinamis)
+                                if ($(node).hasClass('selisih-pagu')) {
+                                    return $(node).text().replace(/\./g, '').replace(',', '.');
+                                }
+                                // Kolom Persentase Selisih (dinamis)
+                                if ($(node).hasClass('persentase-selisih-pagu')) {
+                                    return $(node).text().replace('%','').replace(',','.');
+                                }
+                                // Kolom angka lain
                                 if (column >= 3) {
                                     let clean = ('' + data)
-                                        .replace(/\s/g, '')        // Hilangkan semua whitespace
-                                        .replace(/[^0-9,.-]/g, '') // Hanya angka, minus, koma, titik
-                                        .replace(/\./g, '')        // Hilangkan titik ribuan
-                                        .replace(/,/g, '.');        // Ganti koma desimal jadi titik
-                                    // Pastikan hasilnya valid number
+                                        .replace(/\s/g, '')
+                                        .replace(/[^0-9,.-]/g, '')
+                                        .replace(/\./g, '')
+                                        .replace(/,/g, '.');
                                     return clean !== '' && !isNaN(clean) ? clean : '';
                                 }
+                                // Kolom lain
                                 return typeof data === 'string' ? data.replace(/<[^>]*>?/gm, '') : data;
                             }
                         }
