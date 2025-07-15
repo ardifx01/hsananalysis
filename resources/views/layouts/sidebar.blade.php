@@ -1,4 +1,4 @@
-<aside class="sidebar sidebar-default sidebar-white sidebar-base navs-rounded-all ">
+<aside class="sidebar sidebar-default sidebar-white sidebar-base navs-rounded-all">
     <div class="sidebar-header d-flex align-items-center justify-content-start">
         <a href="/" class="navbar-brand">
             <!--Logo start-->
@@ -308,7 +308,7 @@
                                     </svg>
                                 </i>
                                 <i class="sidenav-mini-icon"> C </i>
-                                <span class="item-name">Calculation</span>
+                                <span class="item-name">Rincian Belanja OPD</span>
                             </a>
                         </li>
                         

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Calculator Anggaran')
-@section('page-title', 'Calculator Anggaran')
+@section('title', 'Rincian Belanja Per OPD')
+@section('page-title', 'Rincian Belanja Per OPD')
 
 @section('content')
 <div class="container-fluid">
