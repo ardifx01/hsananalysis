@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Rekap Perbandingan Belanja Rekening')
-@section('page-title', 'Perbandingan Belanja Rekening')
+@section('title', 'Rekap Perbandingan Belanja Rekening Test')
+@section('page-title', 'Perbandingan Belanja Rekening Per OPD')
 
 @section('content')
 
