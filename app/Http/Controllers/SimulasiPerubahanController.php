@@ -9,6 +9,7 @@ use App\Models\KodeRekening;
 use App\Models\SimulasiPenyesuaianAnggaran;
 use App\Models\Realisasi;
 use App\Exports\RekapitulasiStrukturOpdExport;
+use App\Exports\RekapitulasiStrukturOpdModalExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class SimulasiPerubahanController extends Controller
@@ -376,5 +377,241 @@ class SimulasiPerubahanController extends Controller
         $filename = 'rekapitulasi-struktur-opd-' . $tahapanName . '-' . date('Y-m-d') . '.xlsx';
 
         return Excel::download(new RekapitulasiStrukturOpdExport($rekapitulasiData, $kodeRekenings, $tahapanName), $filename);
+    }
+
+    public function rekapitulasiStrukturOpdModal(Request $request)
+    {
+        $tahapans = Tahapan::all();
+        $tahapanId = $request->input('tahapan_id');
+
+        // Ambil semua kode rekening yang diawali angka 5 dan hanya 2 atau 3 segmen (misal: 5.1 dan 5.1.01)
+        $kodeRekenings = KodeRekening::where(function($q) {
+            $q->whereRaw("kode_rekening REGEXP '^5\\.[0-9]+$'") // 2 segmen, contoh: 5.1
+              ->orWhereRaw("kode_rekening REGEXP '^5\\.[0-9]+\\.[0-9]{2}$'"); // 3 segmen, contoh: 5.1.01
+        })
+        ->orderBy('kode_rekening')
+        ->get();
+
+        // Ambil daftar semua OPD
+        $opds = DataAnggaran::select('kode_skpd', 'nama_skpd')
+            ->distinct()
+            ->orderBy('kode_skpd')
+            ->get();
+
+        $rekapitulasiData = collect();
+        
+        if ($tahapanId) {
+            // Ambil semua data simulasi penyesuaian anggaran
+            $simulasiPenyesuaian = SimulasiPenyesuaianAnggaran::all();
+
+            // Ambil data realisasi untuk semua OPD
+            $realisasiMap = [];
+            $realisasiRows = Realisasi::all();
+            foreach ($realisasiRows as $row) {
+                $realisasiMap[$row->kode_opd][$row->kode_rekening] = $row->realisasi;
+            }
+
+            // Proses data untuk setiap OPD
+            foreach ($opds as $opd) {
+                $opdData = [
+                    'kode_skpd' => $opd->kode_skpd,
+                    'nama_skpd' => $opd->nama_skpd,
+                    'total_anggaran' => 0,
+                    'total_realisasi' => 0,
+                    'total_penyesuaian' => 0,
+                    'total_proyeksi' => 0,
+                    'struktur_belanja' => []
+                ];
+
+                // Ambil data anggaran per kode rekening untuk OPD ini
+                $anggaranPerRekening = DataAnggaran::select('kode_rekening', 'nama_rekening')
+                    ->selectRaw('SUM(pagu) as total_pagu')
+                    ->where('tahapan_id', $tahapanId)
+                    ->where('kode_skpd', $opd->kode_skpd)
+                    ->groupBy('kode_rekening', 'nama_rekening')
+                    ->get();
+
+                // Proses setiap kode rekening struktur
+                foreach ($kodeRekenings as $kr) {
+                    $is3Segmen = count(explode('.', $kr->kode_rekening)) === 3;
+                    
+                    // Hitung total pagu untuk kode rekening ini
+                    $totalPagu = $anggaranPerRekening->where(function($item) use ($kr) {
+                        return str_starts_with($item->kode_rekening, $kr->kode_rekening);
+                    })->sum('total_pagu');
+
+                    // Hitung total realisasi untuk kode rekening ini
+                    $totalRealisasi = 0;
+                    $realisasiOpd = $realisasiMap[$opd->kode_skpd] ?? [];
+                    foreach ($realisasiOpd as $kodeRek => $realisasi) {
+                        if (str_starts_with($kodeRek, $kr->kode_rekening)) {
+                            $totalRealisasi += $realisasi;
+                        }
+                    }
+
+                    // Hitung penyesuaian untuk kode rekening ini
+                    $totalPenyesuaian = 0;
+                    $penyesuaianOpd = $simulasiPenyesuaian->where('kode_opd', $opd->kode_skpd);
+                    foreach ($penyesuaianOpd as $adj) {
+                        if (str_starts_with($adj->kode_rekening, $kr->kode_rekening)) {
+                            if ($adj->operasi == '+') {
+                                $totalPenyesuaian += $adj->nilai;
+                            } elseif ($adj->operasi == '-') {
+                                $totalPenyesuaian -= $adj->nilai;
+                            }
+                        }
+                    }
+
+                    // Hitung proyeksi perubahan
+                    $anggaranRealisasi = $totalPagu - $totalRealisasi;
+                    $proyeksiPerubahan = $anggaranRealisasi + $totalPenyesuaian;
+
+                    // Tambahkan ke struktur belanja
+                    $opdData['struktur_belanja'][$kr->kode_rekening] = [
+                        'nama_rekening' => $kr->uraian,
+                        'anggaran' => $totalPagu,
+                        'realisasi' => $totalRealisasi,
+                        'anggaran_realisasi' => $anggaranRealisasi,
+                        'penyesuaian' => $totalPenyesuaian,
+                        'proyeksi' => $proyeksiPerubahan,
+                        'is_3_segmen' => $is3Segmen
+                    ];
+
+                    // Tambahkan ke total jika 3 segmen
+                    if ($is3Segmen) {
+                        $opdData['total_anggaran'] += $totalPagu;
+                        $opdData['total_realisasi'] += $totalRealisasi;
+                        $opdData['total_penyesuaian'] += $totalPenyesuaian;
+                        $opdData['total_proyeksi'] += $proyeksiPerubahan;
+                    }
+                }
+
+                $rekapitulasiData->push($opdData);
+            }
+        }
+
+        return view('simulasi-perubahan.rekapitulasi-struktur-opd-modal', [
+            'tahapans' => $tahapans,
+            'tahapanId' => $tahapanId,
+            'kodeRekenings' => $kodeRekenings,
+            'rekapitulasiData' => $rekapitulasiData,
+        ]);
+    }
+
+    public function exportExcelModal(Request $request)
+    {
+        $tahapanId = $request->input('tahapan_id');
+        
+        if (!$tahapanId) {
+            return redirect()->back()->with('error', 'Silakan pilih tahapan terlebih dahulu.');
+        }
+
+        // Ambil data yang sama seperti di method rekapitulasiStrukturOpdModal
+        $kodeRekenings = KodeRekening::where(function($q) {
+            $q->whereRaw("kode_rekening REGEXP '^5\\.[0-9]+$'")
+              ->orWhereRaw("kode_rekening REGEXP '^5\\.[0-9]+\\.[0-9]{2}$'");
+        })
+        ->orderBy('kode_rekening')
+        ->get();
+
+        $opds = DataAnggaran::select('kode_skpd', 'nama_skpd')
+            ->distinct()
+            ->orderBy('kode_skpd')
+            ->get();
+
+        $rekapitulasiData = collect();
+        
+        // Ambil semua data simulasi penyesuaian anggaran
+        $simulasiPenyesuaian = SimulasiPenyesuaianAnggaran::all();
+
+        // Ambil data realisasi untuk semua OPD
+        $realisasiMap = [];
+        $realisasiRows = Realisasi::all();
+        foreach ($realisasiRows as $row) {
+            $realisasiMap[$row->kode_opd][$row->kode_rekening] = $row->realisasi;
+        }
+
+        // Proses data untuk setiap OPD
+        foreach ($opds as $opd) {
+            $opdData = [
+                'kode_skpd' => $opd->kode_skpd,
+                'nama_skpd' => $opd->nama_skpd,
+                'total_anggaran' => 0,
+                'total_realisasi' => 0,
+                'total_penyesuaian' => 0,
+                'total_proyeksi' => 0,
+                'struktur_belanja' => []
+            ];
+
+            // Ambil data anggaran per kode rekening untuk OPD ini
+            $anggaranPerRekening = DataAnggaran::select('kode_rekening', 'nama_rekening')
+                ->selectRaw('SUM(pagu) as total_pagu')
+                ->where('tahapan_id', $tahapanId)
+                ->where('kode_skpd', $opd->kode_skpd)
+                ->groupBy('kode_rekening', 'nama_rekening')
+                ->get();
+
+            // Proses setiap kode rekening struktur
+            foreach ($kodeRekenings as $kr) {
+                $is3Segmen = count(explode('.', $kr->kode_rekening)) === 3;
+                
+                // Hitung total pagu untuk kode rekening ini
+                $totalPagu = $anggaranPerRekening->where(function($item) use ($kr) {
+                    return str_starts_with($item->kode_rekening, $kr->kode_rekening);
+                })->sum('total_pagu');
+
+                // Hitung total realisasi untuk kode rekening ini
+                $totalRealisasi = 0;
+                $realisasiOpd = $realisasiMap[$opd->kode_skpd] ?? [];
+                foreach ($realisasiOpd as $kodeRek => $realisasi) {
+                    if (str_starts_with($kodeRek, $kr->kode_rekening)) {
+                        $totalRealisasi += $realisasi;
+                    }
+                }
+
+                // Hitung penyesuaian untuk kode rekening ini
+                $totalPenyesuaian = 0;
+                $penyesuaianOpd = $simulasiPenyesuaian->where('kode_opd', $opd->kode_skpd);
+                foreach ($penyesuaianOpd as $adj) {
+                    if (str_starts_with($adj->kode_rekening, $kr->kode_rekening)) {
+                        if ($adj->operasi == '+') {
+                            $totalPenyesuaian += $adj->nilai;
+                        } elseif ($adj->operasi == '-') {
+                            $totalPenyesuaian -= $adj->nilai;
+                        }
+                    }
+                }
+
+                // Hitung proyeksi perubahan
+                $anggaranRealisasi = $totalPagu - $totalRealisasi;
+                $proyeksiPerubahan = $anggaranRealisasi + $totalPenyesuaian;
+
+                // Tambahkan ke struktur belanja
+                $opdData['struktur_belanja'][$kr->kode_rekening] = [
+                    'nama_rekening' => $kr->uraian,
+                    'anggaran' => $totalPagu,
+                    'realisasi' => $totalRealisasi,
+                    'anggaran_realisasi' => $anggaranRealisasi,
+                    'penyesuaian' => $totalPenyesuaian,
+                    'proyeksi' => $proyeksiPerubahan,
+                    'is_3_segmen' => $is3Segmen
+                ];
+
+                // Tambahkan ke total jika 3 segmen
+                if ($is3Segmen) {
+                    $opdData['total_anggaran'] += $totalPagu;
+                    $opdData['total_realisasi'] += $totalRealisasi;
+                    $opdData['total_penyesuaian'] += $totalPenyesuaian;
+                    $opdData['total_proyeksi'] += $proyeksiPerubahan;
+                }
+            }
+
+            $rekapitulasiData->push($opdData);
+        }
+
+        $tahapanName = Tahapan::find($tahapanId)->name ?? 'Tahapan ' . $tahapanId;
+        $filename = 'rekapitulasi-struktur-opd-modal-' . $tahapanName . '-' . date('Y-m-d') . '.xlsx';
+
+        return Excel::download(new RekapitulasiStrukturOpdModalExport($rekapitulasiData, $kodeRekenings, $tahapanName), $filename);
     }
 }

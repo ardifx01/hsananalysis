@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Rekapitulasi Struktur Semua OPD')
-@section('page-title', 'Rekapitulasi Struktur Semua OPD')
+@section('title', 'Rekapitulasi Struktur Semua OPD - Modal Digabung')
+@section('page-title', 'Rekapitulasi Struktur Semua OPD - Modal Digabung')
 
 @section('content')
 <div class="card" data-aos="fade-up" data-aos-delay="300">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h4>Rekapitulasi Struktur Semua OPD</h4>
+        <h4>Rekapitulasi Struktur Semua OPD - Modal Digabung</h4>
         <form method="GET" action="" class="flex-wrap gap-2 d-flex align-items-center">
             <label for="tahapan_id" class="mb-0 me-2">Filter Tahapan:</label>
             <select name="tahapan_id" id="tahapan_id" class="form-select form-select-sm me-2" onchange="this.form.submit()">
@@ -27,11 +27,11 @@
                     <button class="btn btn-danger btn-sm" onclick="exportToPDF()">
                         <i class="bi bi-file-pdf"></i> Export PDF
                     </button>
-                    <a href="{{ route('simulasi.rekapitulasi-struktur-opd.export-excel', ['tahapan_id' => $tahapanId]) }}" class="btn btn-success btn-sm">
+                    <a href="{{ route('simulasi.rekapitulasi-struktur-opd-modal.export-excel', ['tahapan_id' => $tahapanId]) }}" class="btn btn-success btn-sm">
                         <i class="bi bi-file-excel"></i> Export Excel
                     </a>
-                    <a href="{{ route('simulasi.rekapitulasi-struktur-opd-modal', ['tahapan_id' => $tahapanId]) }}" class="btn btn-warning btn-sm">
-                        <i class="bi bi-collection"></i> Rekap Modal Digabung
+                    <a href="{{ route('simulasi.rekapitulasi-struktur-opd', ['tahapan_id' => $tahapanId]) }}" class="btn btn-info btn-sm">
+                        <i class="bi bi-list-ul"></i> Rekap Detail
                     </a>
                 </div>
             </div>
@@ -41,6 +41,8 @@
             <div id="print-area">
                 <div class="mb-2">
                     <strong>Tahapan:</strong> {{ $tahapans->where('id', $tahapanId)->first()->name ?? '-' }}
+                    <br>
+                    <strong>Catatan:</strong> Belanja Modal (5.2.xx) telah digabung dalam satu kolom
                 </div>
                 
                 <div class="table-responsive" style="max-height: 80vh; overflow-y: auto;">
@@ -49,12 +51,28 @@
                             <tr>
                                 <th style="width: 50px;">No</th>
                                 <th style="min-width: 200px;">Nama OPD</th>
+                                @php
+                                    $modalColumnAdded = false;
+                                @endphp
                                 @foreach($kodeRekenings as $kr)
                                     @if(count(explode('.', $kr->kode_rekening)) === 3)
-                                        <th style="width: 120px;" class="text-center" title="{{ $kr->uraian }}">
-                                            {{ $kr->kode_rekening }}<br>
-                                            <small>{{ \Illuminate\Support\Str::limit($kr->uraian, 15) }}</small>
-                                        </th>
+                                        @php
+                                            $isModal = str_starts_with($kr->kode_rekening, '5.2.');
+                                        @endphp
+                                        @if(!$isModal)
+                                            <th style="width: 120px;" class="text-center" title="{{ $kr->uraian }}">
+                                                {{ $kr->kode_rekening }}<br>
+                                                <small>{{ \Illuminate\Support\Str::limit($kr->uraian, 15) }}</small>
+                                            </th>
+                                        @elseif(!$modalColumnAdded)
+                                            <th style="width: 120px;" class="text-center table-warning" title="Belanja Modal">
+                                                5.2 - Belanja Modal<br>
+                                                <small>Total 5.2.xx</small>
+                                            </th>
+                                            @php
+                                                $modalColumnAdded = true;
+                                            @endphp
+                                        @endif
                                     @endif
                                 @endforeach
                                 <th style="width: 120px;" class="text-center table-secondary">Total Anggaran</th>
@@ -65,15 +83,40 @@
                                 <tr>
                                     <td class="text-center">{{ $i + 1 }}</td>
                                     <td>{{ $opd['nama_skpd'] }}</td>
+                                    @php
+                                        $modalColumnAdded = false;
+                                        // Hitung total modal terlebih dahulu
+                                        $totalModal = 0;
+                                        foreach($kodeRekenings as $kr) {
+                                            if (count(explode('.', $kr->kode_rekening)) === 3) {
+                                                $isModal = str_starts_with($kr->kode_rekening, '5.2.');
+                                                if ($isModal) {
+                                                    $strukturData = $opd['struktur_belanja'][$kr->kode_rekening] ?? null;
+                                                    $anggaran = $strukturData ? $strukturData['anggaran'] : 0;
+                                                    $totalModal += $anggaran;
+                                                }
+                                            }
+                                        }
+                                    @endphp
                                     @foreach($kodeRekenings as $kr)
                                         @if(count(explode('.', $kr->kode_rekening)) === 3)
                                             @php
+                                                $isModal = str_starts_with($kr->kode_rekening, '5.2.');
                                                 $strukturData = $opd['struktur_belanja'][$kr->kode_rekening] ?? null;
                                                 $anggaran = $strukturData ? $strukturData['anggaran'] : 0;
                                             @endphp
-                                            <td class="text-end">
-                                                {{ $anggaran ? number_format($anggaran, 2, ',', '.') : '-' }}
-                                            </td>
+                                            @if(!$isModal)
+                                                <td class="text-end">
+                                                    {{ $anggaran ? number_format($anggaran, 2, ',', '.') : '-' }}
+                                                </td>
+                                            @elseif(!$modalColumnAdded)
+                                                <td class="text-end table-warning fw-bold">
+                                                    {{ $totalModal ? number_format($totalModal, 2, ',', '.') : '-' }}
+                                                </td>
+                                                @php
+                                                    $modalColumnAdded = true;
+                                                @endphp
+                                            @endif
                                         @endif
                                     @endforeach
                                     <td class="text-end table-secondary fw-bold">
@@ -85,17 +128,44 @@
                         <tfoot>
                             <tr class="table-secondary fw-bold">
                                 <th colspan="2" class="text-center">TOTAL</th>
+                                @php
+                                    $modalColumnAdded = false;
+                                    // Hitung total modal terlebih dahulu
+                                    $totalModalAll = 0;
+                                    foreach($kodeRekenings as $kr) {
+                                        if (count(explode('.', $kr->kode_rekening)) === 3) {
+                                            $isModal = str_starts_with($kr->kode_rekening, '5.2.');
+                                            if ($isModal) {
+                                                $totalPerRekening = $rekapitulasiData->sum(function($opd) use ($kr) {
+                                                    $strukturData = $opd['struktur_belanja'][$kr->kode_rekening] ?? null;
+                                                    return $strukturData ? $strukturData['anggaran'] : 0;
+                                                });
+                                                $totalModalAll += $totalPerRekening;
+                                            }
+                                        }
+                                    }
+                                @endphp
                                 @foreach($kodeRekenings as $kr)
                                     @if(count(explode('.', $kr->kode_rekening)) === 3)
                                         @php
+                                            $isModal = str_starts_with($kr->kode_rekening, '5.2.');
                                             $totalPerRekening = $rekapitulasiData->sum(function($opd) use ($kr) {
                                                 $strukturData = $opd['struktur_belanja'][$kr->kode_rekening] ?? null;
                                                 return $strukturData ? $strukturData['anggaran'] : 0;
                                             });
                                         @endphp
-                                        <th class="text-end">
-                                            {{ number_format($totalPerRekening, 2, ',', '.') }}
-                                        </th>
+                                        @if(!$isModal)
+                                            <th class="text-end">
+                                                {{ number_format($totalPerRekening, 2, ',', '.') }}
+                                            </th>
+                                        @elseif(!$modalColumnAdded)
+                                            <th class="text-end table-warning">
+                                                {{ number_format($totalModalAll, 2, ',', '.') }}
+                                            </th>
+                                            @php
+                                                $modalColumnAdded = true;
+                                            @endphp
+                                        @endif
                                     @endif
                                 @endforeach
                                 <th class="text-end">
@@ -108,7 +178,7 @@
             </div>
         @else
             <div class="alert alert-info">
-                <i class="bi bi-info-circle"></i> Silakan pilih tahapan untuk melihat rekapitulasi struktur semua OPD.
+                <i class="bi bi-info-circle"></i> Silakan pilih tahapan untuk melihat rekapitulasi struktur semua OPD dengan modal digabung.
             </div>
         @endif
     </div>
@@ -183,7 +253,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
-
     // Fungsi untuk export ke PDF
     window.exportToPDF = async function() {
         try {
@@ -221,7 +290,7 @@
                     }
                     prev = prev.previousSibling;
                 }
-                if (!title) title = 'Tabel ' + (i + 1);
+                if (!title) title = 'Rekapitulasi Struktur OPD - Modal Digabung';
 
                 // Ambil header dan data
                 const headers = [];
@@ -283,7 +352,7 @@
                 firstTable = false;
             }
 
-            pdf.save('rekapitulasi-struktur-semua-opd.pdf');
+            pdf.save('rekapitulasi-struktur-opd-modal-digabung.pdf');
             loadingDiv.remove();
         } catch (error) {
             alert('Terjadi kesalahan saat membuat PDF: ' + error.message);
