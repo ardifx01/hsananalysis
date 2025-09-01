@@ -25,9 +25,14 @@
     </div>
     <div class="card-body">
         <div class="mb-3">
-            <a href="{{ route('simulasi.belanja-opd') }}" class="btn btn-info btn-sm">
-                <i class="bi bi-list-ul"></i> Lihat total simulasi seluruh OPD
-            </a>
+            <div class="btn-group">
+                <a href="{{ route('simulasi.belanja-opd') }}" class="btn btn-info btn-sm">
+                    <i class="bi bi-list-ul"></i> Lihat total simulasi seluruh OPD
+                </a>
+                <a href="{{ route('simulasi.rekapitulasi-struktur-opd') }}" class="btn btn-success btn-sm">
+                    <i class="bi bi-table"></i> Rekapitulasi Struktur Semua OPD
+                </a>
+            </div>
         </div>
         <div class="mb-3">
             <div class="btn-group">

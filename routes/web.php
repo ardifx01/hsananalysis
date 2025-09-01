@@ -150,6 +150,10 @@ Route::middleware('auth')->group(function () {
 
         // Simulasi Belanja per OPD
         Route::get('/simulasi/belanja-opd', [App\Http\Controllers\SimulasiPerubahanController::class, 'simulasiBelanjaOpd'])->name('simulasi.belanja-opd');
+        
+        // Rekapitulasi Struktur Semua OPD
+        Route::get('/simulasi/rekapitulasi-struktur-opd', [App\Http\Controllers\SimulasiPerubahanController::class, 'rekapitulasiStrukturOpd'])->name('simulasi.rekapitulasi-struktur-opd');
+        Route::get('/simulasi/rekapitulasi-struktur-opd/export-excel', [App\Http\Controllers\SimulasiPerubahanController::class, 'exportExcel'])->name('simulasi.rekapitulasi-struktur-opd.export-excel');
 
         // Realisasi
         Route::resource('realisasi', RealisasiController::class);
