@@ -8,12 +8,15 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Font;
 
-class RekapitulasiStrukturOpdExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, WithTitle
+class RekapitulasiStrukturOpdExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, WithTitle, WithEvents
 {
     protected $rekapitulasiData;
     protected $kodeRekenings;
@@ -66,7 +69,7 @@ class RekapitulasiStrukturOpdExport implements FromCollection, WithHeadings, Wit
 
     public function headings(): array
     {
-        $headings = ['No', 'Kode OPD', 'Nama OPD'];
+        $headings = ['No', 'Nama OPD'];
         
         // Tambahkan kolom struktur belanja
         foreach ($this->kodeRekenings as $kr) {
@@ -89,13 +92,11 @@ class RekapitulasiStrukturOpdExport implements FromCollection, WithHeadings, Wit
         if ($opd['kode_skpd'] === 'TOTAL') {
             $row = [
                 '',
-                'TOTAL',
-                ''
+                'TOTAL'
             ];
         } else {
             $row = [
                 $rowNumber,
-                $opd['kode_skpd'],
                 $opd['nama_skpd']
             ];
         }
@@ -181,12 +182,11 @@ class RekapitulasiStrukturOpdExport implements FromCollection, WithHeadings, Wit
     {
         $widths = [
             'A' => 8,  // No
-            'B' => 15, // Kode OPD
-            'C' => 40, // Nama OPD
+            'B' => 40, // Nama OPD
         ];
         
         // Set width untuk kolom struktur belanja
-        $columnIndex = 4; // Mulai dari kolom D
+        $columnIndex = 3; // Mulai dari kolom C
         foreach ($this->kodeRekenings as $kr) {
             if (count(explode('.', $kr->kode_rekening)) === 3) {
                 $column = $this->getColumnLetter($columnIndex);
@@ -216,5 +216,99 @@ class RekapitulasiStrukturOpdExport implements FromCollection, WithHeadings, Wit
             $index = intval($index / 26);
         }
         return $letter;
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function(AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                
+                // Tambahkan judul di atas tabel
+                $title = 'Rekapitulasi Struktur Semua OPD ' . $this->tahapanName . ' APBD 2025';
+                
+                // Insert row untuk judul
+                $sheet->insertNewRowBefore(1, 2);
+                
+                // Set judul
+                $sheet->setCellValue('A1', $title);
+                
+                // Merge cells untuk judul
+                $lastColumn = $sheet->getHighestColumn();
+                $sheet->mergeCells('A1:' . $lastColumn . '1');
+                
+                // Style untuk judul
+                $sheet->getStyle('A1')->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'size' => 16,
+                        'color' => ['rgb' => '000000'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                    ],
+                ]);
+                
+                // Set tinggi row judul
+                $sheet->getRowDimension(1)->setRowHeight(30);
+                
+                // Geser semua data ke bawah 2 baris
+                $highestRow = $sheet->getHighestRow();
+                $highestColumn = $sheet->getHighestColumn();
+                
+                // Copy data dari row 3 ke row 3 (tidak perlu copy, hanya perlu menyesuaikan style)
+                $sheet->getStyle('A3:' . $highestColumn . $highestRow)->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                        ],
+                    ],
+                ]);
+                
+                // Style untuk header (sekarang di row 3)
+                $sheet->getStyle('A3:' . $highestColumn . '3')->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'color' => ['rgb' => 'FFFFFF'],
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => '2E86AB'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                        ],
+                    ],
+                ]);
+                
+                // Style untuk kolom angka (right align) - mulai dari row 4
+                $dataRange = 'C4:' . $highestColumn . $highestRow;
+                $sheet->getStyle($dataRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                
+                // Style untuk kolom nama OPD (left align) - mulai dari row 4
+                $sheet->getStyle('B4:B' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                
+                // Style untuk total row
+                $totalRow = $highestRow;
+                $sheet->getStyle('A' . $totalRow . ':' . $highestColumn . $totalRow)->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'F8F9FA'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    ],
+                ]);
+            },
+        ];
     }
 }

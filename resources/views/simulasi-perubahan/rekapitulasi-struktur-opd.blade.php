@@ -45,7 +45,6 @@
                         <thead class="table-primary">
                             <tr>
                                 <th style="width: 50px;">No</th>
-                                <th style="width: 120px;">Kode OPD</th>
                                 <th style="min-width: 200px;">Nama OPD</th>
                                 @foreach($kodeRekenings as $kr)
                                     @if(count(explode('.', $kr->kode_rekening)) === 3)
@@ -62,7 +61,6 @@
                             @foreach($rekapitulasiData as $i => $opd)
                                 <tr>
                                     <td class="text-center">{{ $i + 1 }}</td>
-                                    <td>{{ $opd['kode_skpd'] }}</td>
                                     <td>{{ $opd['nama_skpd'] }}</td>
                                     @foreach($kodeRekenings as $kr)
                                         @if(count(explode('.', $kr->kode_rekening)) === 3)
@@ -83,7 +81,7 @@
                         </tbody>
                         <tfoot>
                             <tr class="table-secondary fw-bold">
-                                <th colspan="3" class="text-center">TOTAL</th>
+                                <th colspan="2" class="text-center">TOTAL</th>
                                 @foreach($kodeRekenings as $kr)
                                     @if(count(explode('.', $kr->kode_rekening)) === 3)
                                         @php

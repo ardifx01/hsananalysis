@@ -61,7 +61,7 @@ resources/views/simulasi-perubahan/rekapitulasi-struktur-opd.blade.php
 ## Struktur Data
 
 ### Data yang Ditampilkan
-1. **Kode OPD** - Kode SKPD/OPD
+1. **No** - Nomor urut
 2. **Nama OPD** - Nama SKPD/OPD
 3. **Struktur Belanja** - Kolom untuk setiap kode rekening 3 segmen
 4. **Total Anggaran** - Total anggaran per OPD
@@ -79,10 +79,10 @@ Hanya menampilkan kode rekening yang:
 
 ## Contoh Output
 ```
-| No | Kode OPD | Nama OPD | 5.1.01 | 5.1.02 | 5.1.03 | Total |
-|----|----------|----------|--------|--------|--------|-------|
-| 1  | 1.01     | Dinas A  | 1000000| 500000 | 300000 | 1800000|
-| 2  | 1.02     | Dinas B  | 800000 | 400000 | 200000 | 1400000|
+| No | Nama OPD | 5.1.01 | 5.1.02 | 5.1.03 | Total |
+|----|----------|--------|--------|--------|-------|
+| 1  | Dinas A  | 1000000| 500000 | 300000 | 1800000|
+| 2  | Dinas B  | 800000 | 400000 | 200000 | 1400000|
 ```
 
 ## Dependencies
