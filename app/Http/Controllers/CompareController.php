@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\DataAnggaran;
 use App\Models\Tahapan;
+use App\Exports\CompareRekExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
 
 
@@ -173,6 +175,109 @@ public function compareDataRek(Request $request)
         'tahapanId',
         'keyword'
     ));
+}
+
+public function exportExcel(Request $request)
+{
+    // Ambil filter dari request
+    $tahapanId = $request->input('tahapan_id');
+    $keyword = $request->input('keyword');
+    
+    // Ambil data tahapan dari database
+    $tahapans = Tahapan::all();
+    
+    // Query data rekap rekening belanja seluruh OPD
+    $query = DataAnggaran::select(
+        'kode_skpd',
+        'nama_skpd', 
+        'kode_rekening', 
+        'nama_rekening',
+        'nama_standar_harga',
+        'tahapan_id',
+        DB::raw('SUM(pagu) as total_pagu')
+    );
+    
+    // Filter berdasarkan tahapan jika dipilih
+    if ($tahapanId) {
+        $query->where('tahapan_id', $tahapanId);
+    }
+    
+    // Filter berdasarkan kata kunci pada nama rekening atau nama standar harga
+    if ($keyword) {
+        // Pisahkan kata kunci berdasarkan koma atau spasi
+        $keywords = array_filter(array_map('trim', explode(',', $keyword)));
+        if (empty($keywords)) {
+            // Jika tidak ada koma, coba pisahkan berdasarkan spasi
+            $keywords = array_filter(array_map('trim', explode(' ', $keyword)));
+        }
+        
+        $query->where(function($q) use ($keywords) {
+            foreach ($keywords as $kw) {
+                if (!empty($kw)) {
+                    $q->orWhere(function($subQ) use ($kw) {
+                        // Gunakan pendekatan yang kompatibel dengan MySQL
+                        // Cari kata yang diawali spasi atau di awal string, dan diakhiri spasi atau di akhir string
+                        $subQ->where('nama_rekening', 'REGEXP', '(^|[[:space:]])' . preg_quote($kw, '/') . '([[:space:]]|$)')
+                              ->orWhere('nama_standar_harga', 'REGEXP', '(^|[[:space:]])' . preg_quote($kw, '/') . '([[:space:]]|$)')
+                              ->orWhere('kode_rekening', 'REGEXP', '(^|[[:space:]])' . preg_quote($kw, '/') . '([[:space:]]|$)');
+                    });
+                }
+            }
+        });
+    }
+    
+    $rekap = $query->groupBy('kode_skpd', 'nama_skpd', 'kode_rekening', 'nama_rekening', 'nama_standar_harga', 'tahapan_id')
+        ->orderByRaw('CAST(kode_skpd AS UNSIGNED) ASC, kode_skpd ASC')
+        ->orderBy('kode_rekening', 'asc')
+        ->get();
+    
+    // Jika ada filter tahapan, hanya tampilkan data untuk tahapan tersebut
+    if ($tahapanId) {
+        $rekap = $rekap->where('tahapan_id', $tahapanId);
+        
+        // Hanya tampilkan tahapan yang dipilih
+        $availableTahapans = collect([$tahapanId]);
+        
+        // Hitung total untuk tahapan yang dipilih sesuai dengan filter kata kunci
+        $totalPerTahapan = [];
+        $totalPerTahapan[$tahapanId] = $rekap->sum('total_pagu');
+        
+        // Grand total sama dengan total tahapan yang dipilih
+        $grandTotal = $totalPerTahapan[$tahapanId];
+    } else {
+        // Jika tidak ada filter tahapan, tampilkan semua tahapan
+        $availableTahapans = DataAnggaran::select('tahapan_id')
+            ->distinct()
+            ->orderBy('tahapan_id')
+            ->pluck('tahapan_id');
+        
+        // Hitung total per tahapan untuk footer sesuai dengan filter kata kunci
+        $totalPerTahapan = [];
+        foreach ($availableTahapans as $tahapanId) {
+            $totalPerTahapan[$tahapanId] = $rekap->where('tahapan_id', $tahapanId)->sum('total_pagu');
+        }
+        
+        // Hitung grand total
+        $grandTotal = array_sum($totalPerTahapan);
+    }
+    
+    // Pastikan data hanya ditampilkan jika ada filter yang diterapkan
+    if (!$keyword && !$tahapanId) {
+        $rekap = collect();
+        $availableTahapans = collect();
+    }
+    
+    $filename = 'Rekap_Rekening_Belanja_OPD';
+    if ($tahapanId) {
+        $tahapanName = $tahapans->find($tahapanId)->name ?? 'Tahapan_' . $tahapanId;
+        $filename .= '_' . str_replace(' ', '_', $tahapanName);
+    }
+    if ($keyword) {
+        $filename .= '_' . str_replace([' ', ','], '_', $keyword);
+    }
+    $filename .= '_' . date('Y-m-d_H-i-s') . '.xlsx';
+    
+    return Excel::download(new CompareRekExport($rekap, $tahapans, $availableTahapans, $tahapanId, $keyword), $filename);
 }
 
 

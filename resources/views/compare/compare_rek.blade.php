@@ -99,6 +99,9 @@
                     <a href="{{ route('compare-rek') }}" class="btn btn-secondary btn-sm">
                         <i class="bi bi-arrow-clockwise"></i> Reset
                     </a>
+                    <a href="{{ route('compare-rek.export-excel', ['tahapan_id' => $tahapanId, 'keyword' => $keyword]) }}" class="btn btn-success btn-sm">
+                        <i class="bi bi-file-excel"></i> Export Excel
+                    </a>
                 @endif
             </form>
         </div>
@@ -184,10 +187,10 @@
                                             <strong>{{ number_format($skpdTotal, 2, ',', '.') }}</strong>
                                         </td>
                                     @else
-                                        @foreach($availableTahapans as $tahapanId)
+                                        @foreach($availableTahapans as $tahapanIdLoop)
                                             @php
                                                 $totalPerTahapanSkpd = $rekap->where('kode_skpd', $currentSkpd)
-                                                    ->where('tahapan_id', $tahapanId)
+                                                    ->where('tahapan_id', $tahapanIdLoop)
                                                     ->sum('total_pagu');
                                             @endphp
                                             <td class="text-end table-warning">
@@ -212,9 +215,9 @@
                                     </td>
                                     @php $skpdTotal += $item->total_pagu; @endphp
                                 @else
-                                    @foreach($availableTahapans as $tahapanId)
+                                    @foreach($availableTahapans as $tahapanIdLoop)
                                         @php
-                                            $nilai = ($item->tahapan_id == $tahapanId) ? $item->total_pagu : 0;
+                                            $nilai = ($item->tahapan_id == $tahapanIdLoop) ? $item->total_pagu : 0;
                                         @endphp
                                         <td class="text-end">
                                             {{ $nilai ? number_format($nilai, 2, ',', '.') : '-' }}
@@ -332,6 +335,66 @@
                                 return data.replace(/\./g, '').replace(',', '.');
                             }
                         }
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    text: '📄 Download PDF',
+                    className: 'btn btn-danger',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    footer: true,
+                    exportOptions: {
+                        columns: ':visible',
+                        modifier: { search: 'applied' }
+                    },
+                    customize: function(doc) {
+                        // Tambahkan judul
+                        doc.content.splice(0, 0, {
+                            text: 'REKAP REKENING BELANJA SELURUH OPD',
+                            style: 'header',
+                            alignment: 'center',
+                            margin: [0, 0, 0, 10]
+                        });
+                        
+                        // Tambahkan informasi filter
+                        var filterInfo = [];
+                        @if($tahapanId)
+                            filterInfo.push('Tahapan: {{ $tahapans->find($tahapanId)->name ?? "Tahapan " . $tahapanId }}');
+                        @endif
+                        @if($keyword)
+                            filterInfo.push('Kata Kunci: "{{ $keyword }}"');
+                        @endif
+                        filterInfo.push('Total Data: {{ $rekap->count() }}');
+                        filterInfo.push('Tanggal Export: {{ now()->format("d/m/Y H:i:s") }}');
+                        
+                        if (filterInfo.length > 0) {
+                            doc.content.splice(1, 0, {
+                                text: filterInfo.join(' | '),
+                                style: 'subheader',
+                                alignment: 'center',
+                                margin: [0, 0, 0, 10]
+                            });
+                        }
+                        
+                        // Styling untuk header dan subheader
+                        doc.styles.header = {
+                            fontSize: 16,
+                            bold: true,
+                            margin: [0, 0, 0, 10]
+                        };
+                        doc.styles.subheader = {
+                            fontSize: 10,
+                            bold: false,
+                            margin: [0, 0, 0, 10]
+                        };
+                        
+                        // Tambahkan nomor urut
+                        doc.content[2].table.body.forEach(function(row, index) {
+                            if (index > 0) {
+                                row[0].text = index;
+                            }
+                        });
                     }
                 },
                 {

@@ -43,6 +43,7 @@ Route::middleware('auth')->group(function () {
     // compare data
     Route::get('/compare-opd', [CompareController::class, 'compareOpd'])->name('compare-opd');
     Route::get('/compare/rek', [CompareController::class, 'compareDataRek'])->name('compare-rek');
+    Route::get('/compare/rek/export-excel', [CompareController::class, 'exportExcel'])->name('compare-rek.export-excel');
     Route::get('/compare/opd-rek', [CompareController::class, 'compareDataOpdRek'])->name('compareDataOpdRek');
 
     Route::get('/compare/sub-kegiatan', [CompareController::class, 'comparePerSubKegiatan'])->name('compare.sub-kegiatan');
