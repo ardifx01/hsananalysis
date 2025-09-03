@@ -71,64 +71,110 @@ class CompareController extends Controller
 }
 
 
-public function compareDataRek()
+public function compareDataRek(Request $request)
 {
-    // Ambil data rekap dari database
-    $rekap = DataAnggaran::select(
-            'kode_rekening', 
-            'nama_rekening', 
-            'tahapan_id', 
-            DB::raw('DATE(tanggal_upload) as tanggal_upload'), 
-            DB::raw('TIME(tanggal_upload) as jam_upload'), 
-            DB::raw('SUM(pagu) as total_pagu')
-        )
-        ->groupBy('kode_rekening', 'nama_rekening', 'tahapan_id', 'tanggal_upload', 'jam_upload')
-        ->get()
-        ->groupBy('kode_rekening');
-
+    // Ambil filter dari request
+    $tahapanId = $request->input('tahapan_id');
+    $keyword = $request->input('keyword');
+    
     // Ambil data tahapan dari database
     $tahapans = Tahapan::all();
-
-    // Hitung total pagu untuk setiap kombinasi tahapan_id, tanggal_upload, dan jam_upload
-    $totalPagu = [];
-    $selisihPagu = [];
-    $persentaseSelisihPagu = [];
-    $totalSelisihPagu = 0;
-    $totalPaguTahapanPertama = 0;
-    $totalPaguTahapanTerakhir = 0;
-
-    foreach ($rekap as $kode_rekening => $items) {
-        $firstItem = $items->first();
-        $lastItem = $items->last();
-        $selisihPagu[$kode_rekening] = $lastItem->total_pagu - $firstItem->total_pagu;
-        $totalSelisihPagu += $selisihPagu[$kode_rekening];
-
-        // Hitung persentase selisih
-        if ($firstItem->total_pagu != 0) {
-            $persentaseSelisihPagu[$kode_rekening] = ($selisihPagu[$kode_rekening] / $firstItem->total_pagu) * 100;
-        } else {
-            $persentaseSelisihPagu[$kode_rekening] = 0;
+    
+    // Query data rekap rekening belanja seluruh OPD
+    $query = DataAnggaran::select(
+        'kode_skpd',
+        'nama_skpd', 
+        'kode_rekening', 
+        'nama_rekening',
+        'nama_standar_harga',
+        'tahapan_id',
+        DB::raw('SUM(pagu) as total_pagu')
+    );
+    
+    // Filter berdasarkan tahapan jika dipilih
+    if ($tahapanId) {
+        $query->where('tahapan_id', $tahapanId);
+    }
+    
+    // Filter berdasarkan kata kunci pada nama rekening atau nama standar harga
+    if ($keyword) {
+        // Pisahkan kata kunci berdasarkan koma atau spasi
+        $keywords = array_filter(array_map('trim', explode(',', $keyword)));
+        if (empty($keywords)) {
+            // Jika tidak ada koma, coba pisahkan berdasarkan spasi
+            $keywords = array_filter(array_map('trim', explode(' ', $keyword)));
         }
-
-        $totalPaguTahapanPertama += $firstItem->total_pagu;
-        $totalPaguTahapanTerakhir += $lastItem->total_pagu;
-
-        foreach ($items as $item) {
-            $key = $item->tahapan_id . '_' . str_replace('-', '_', $item->tanggal_upload) . '_' . str_replace(':', '_', $item->jam_upload);
-            if (!isset($totalPagu[$key])) {
-                $totalPagu[$key] = 0;
+        
+        $query->where(function($q) use ($keywords) {
+            foreach ($keywords as $kw) {
+                if (!empty($kw)) {
+                    $q->orWhere(function($subQ) use ($kw) {
+                        // Gunakan pendekatan yang kompatibel dengan MySQL
+                        // Cari kata yang diawali spasi atau di awal string, dan diakhiri spasi atau di akhir string
+                        $subQ->where('nama_rekening', 'REGEXP', '(^|[[:space:]])' . preg_quote($kw, '/') . '([[:space:]]|$)')
+                              ->orWhere('nama_standar_harga', 'REGEXP', '(^|[[:space:]])' . preg_quote($kw, '/') . '([[:space:]]|$)')
+                              ->orWhere('kode_rekening', 'REGEXP', '(^|[[:space:]])' . preg_quote($kw, '/') . '([[:space:]]|$)');
+                    });
+                }
             }
-            $totalPagu[$key] += $item->total_pagu;
+        });
+    }
+    
+    $rekap = $query->groupBy('kode_skpd', 'nama_skpd', 'kode_rekening', 'nama_rekening', 'nama_standar_harga', 'tahapan_id')
+        ->orderByRaw('CAST(kode_skpd AS UNSIGNED) ASC, kode_skpd ASC')
+        ->orderBy('kode_rekening', 'asc')
+        ->get();
+    
+    // Pastikan data hanya ditampilkan jika ada filter yang diterapkan
+    if (!$keyword && !$tahapanId) {
+        // Jika tidak ada filter sama sekali, kirim data kosong
+        $rekap = collect();
+        $availableTahapans = collect();
+        $totalPerTahapan = [];
+        $grandTotal = 0;
+    } else {
+        // Jika ada filter tahapan, hanya tampilkan data untuk tahapan tersebut
+        if ($tahapanId) {
+            $rekap = $rekap->where('tahapan_id', $tahapanId);
+            
+            // Hanya tampilkan tahapan yang dipilih
+            $availableTahapans = collect([$tahapanId]);
+            
+            // Hitung total untuk tahapan yang dipilih
+            $totalPerTahapan = [];
+            $totalPerTahapan[$tahapanId] = DataAnggaran::where('tahapan_id', $tahapanId)
+                ->sum('pagu');
+            
+            // Grand total sama dengan total tahapan yang dipilih
+            $grandTotal = $totalPerTahapan[$tahapanId];
+        } else {
+            // Jika tidak ada filter tahapan, tampilkan semua tahapan
+            $availableTahapans = DataAnggaran::select('tahapan_id')
+                ->distinct()
+                ->orderBy('tahapan_id')
+                ->pluck('tahapan_id');
+            
+            // Hitung total per tahapan untuk footer
+            $totalPerTahapan = [];
+            foreach ($availableTahapans as $tahapanId) {
+                $totalPerTahapan[$tahapanId] = DataAnggaran::where('tahapan_id', $tahapanId)
+                    ->sum('pagu');
+            }
+            
+            // Hitung grand total
+            $grandTotal = array_sum($totalPerTahapan);
         }
     }
 
-    // Hitung total persentase selisih
-    $totalPersentaseSelisihPagu = 0;
-    if ($totalPaguTahapanPertama != 0) {
-        $totalPersentaseSelisihPagu = ($totalSelisihPagu / $totalPaguTahapanPertama) * 100;
-    }
-
-    return view('compare.compare_rek', compact('rekap', 'tahapans', 'totalPagu', 'selisihPagu', 'persentaseSelisihPagu', 'totalSelisihPagu', 'totalPersentaseSelisihPagu'));
+    return view('compare.compare_rek', compact(
+        'rekap', 
+        'tahapans', 
+        'availableTahapans',
+        'totalPerTahapan',
+        'grandTotal',
+        'tahapanId',
+        'keyword'
+    ));
 }
 
 

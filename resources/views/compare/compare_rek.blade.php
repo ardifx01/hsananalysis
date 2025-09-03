@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Rekap Perbandingan Belanja Rekening Test')
-@section('page-title', 'Perbandingan Belanja Rekening Per OPD')
+@section('title', 'Rekap Rekening Belanja Seluruh OPD')
+@section('page-title', 'Rekap Rekening Belanja Seluruh OPD')
 
 @section('content')
 
@@ -66,54 +66,230 @@
 
 <div class="card" data-aos="fade-up" data-aos-delay="800">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h4>Perbandingan Belanja Rekening</h4>
-        <div class="dt-buttons"></div>
+        <h4>Rekap Rekening Belanja Seluruh OPD</h4>
+        <div>
+            <form method="GET" action="{{ route('compare-rek') }}" class="gap-2 d-flex align-items-center">
+                <div class="d-flex align-items-center">
+                    <label class="me-2">Filter Tahapan:</label>
+                    <select name="tahapan_id" class="form-select form-select-sm me-2">
+                        <option value="">Semua Tahapan</option>
+                        @foreach($tahapans as $tahapan)
+                            <option value="{{ $tahapan->id }}" {{ $tahapanId == $tahapan->id ? 'selected' : '' }}>
+                                {{ $tahapan->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                
+                <div class="d-flex align-items-center">
+                    <label class="me-2">Kata Kunci:</label>
+                    <input type="text" name="keyword" value="{{ $keyword }}" 
+                           placeholder="Contoh: printer, atk, meubelier atau printer atk meubelier" 
+                           class="form-control form-control-sm me-2" style="width: 350px;">
+                    <small class="text-muted ms-1" style="font-size: 10px;">
+                        <i class="bi bi-info-circle"></i> Pisahkan dengan koma atau spasi
+                    </small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-sm me-2">
+                    <i class="bi bi-search"></i> Cari
+                </button>
+                
+                @if($keyword || $tahapanId)
+                    <a href="{{ route('compare-rek') }}" class="btn btn-secondary btn-sm">
+                        <i class="bi bi-arrow-clockwise"></i> Reset
+                    </a>
+                @endif
+            </form>
+        </div>
     </div>
 
     <div class="card-body">
+        @if($keyword || $tahapanId)
+            <div class="mb-3 alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                <strong>Filter Aktif:</strong>
+                @if($tahapanId)
+                    <span class="badge bg-primary me-2">Tahapan: {{ $tahapans->find($tahapanId)->name ?? 'Tahapan ' . $tahapanId }}</span>
+                @endif
+                @if($keyword)
+                    @php
+                        $keywords = array_filter(array_map('trim', explode(',', $keyword)));
+                        if (empty($keywords)) {
+                            $keywords = array_filter(array_map('trim', explode(' ', $keyword)));
+                        }
+                        $keywordCount = count($keywords);
+                    @endphp
+                    <span class="badge bg-success me-2">
+                        Kata Kunci: "{{ $keyword }}" 
+                        <small>({{ $keywordCount }} kata)</small>
+                    </span>
+                @endif
+                <span class="badge bg-secondary">Total Data: {{ $rekap->count() }}</span>
+            </div>
+        @else
+            <div class="mb-3 alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Silakan tentukan filter terlebih dahulu!</strong>
+                <br>
+                Masukkan kata kunci pencarian atau pilih tahapan untuk menampilkan data.
+                <br>
+                <small class="text-muted">
+                    <strong>Tips pencarian:</strong> 
+                    Gunakan koma untuk memisahkan kata kunci (contoh: "printer, atk, meubelier") 
+                    atau spasi untuk pencarian yang lebih fleksibel (contoh: "printer atk meubelier")
+                </small>
+            </div>
+        @endif
+        
         <div class="table-container">
-            <table id="rekapTable" class="table table-striped table-bordered">
-                <thead>
-                    <tr>
-                        <th  style="text-align: center;">No</th> <!-- Kolom Nomor Urut -->
-                        <th  style="text-align: center;">Kode Rekening</th>
-                        <th class="nama-rekening" style="text-align: center;">Nama Rekening</th>
-                        @foreach($rekap->first() as $data)
-                            <th style="text-align: center;">{{ optional($tahapans->find($data->tahapan_id))->name }}<br><span style="font-size:10px">{{ $data->tanggal_upload }}<br>{{ $data->jam_upload }}</span></th>
+            @if($rekap->isNotEmpty() && ($keyword || $tahapanId))
+                <table id="rekapTable" class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center; width: 50px;">No</th>
+                            <th style="text-align: center; width: 100px;">Kode SKPD</th>
+                            <th style="text-align: center; width: 120px;">Nama SKPD</th>
+                            <th style="text-align: center; width: 120px;">Kode Rekening</th>
+                            <th style="text-align: center; width: 200px;">Nama Rekening</th>
+                            <th style="text-align: center; width: 150px;">Nama Standar Harga</th>
+                            @if($tahapanId)
+                                <th style="text-align: center; width: 120px;">
+                                    {{ $tahapans->find($tahapanId)->name ?? 'Tahapan ' . $tahapanId }}
+                                </th>
+                            @else
+                                @foreach($availableTahapans as $tahapanId)
+                                    <th style="text-align: center; width: 120px;">
+                                        {{ $tahapans->find($tahapanId)->name ?? 'Tahapan ' . $tahapanId }}
+                                    </th>
+                                @endforeach
+                            @endif
+                        </tr>
+                    </thead>
+                                        <tbody>
+                        @php 
+                            $no = 1;
+                            $currentSkpd = null;
+                            $skpdTotal = 0;
+                        @endphp
+                        @foreach($rekap as $item)
+                            @if($currentSkpd !== null && $currentSkpd !== $item->kode_skpd)
+                                <!-- Tampilkan total SKPD sebelumnya -->
+                                <tr class="table-warning fw-bold">
+                                    <td colspan="6" class="text-end">
+                                        <strong>TOTAL {{ $currentSkpd }} - {{ $rekap->where('kode_skpd', $currentSkpd)->first()->nama_skpd }}</strong>
+                                    </td>
+                                    @if($tahapanId)
+                                        <td class="text-end table-warning">
+                                            <strong>{{ number_format($skpdTotal, 2, ',', '.') }}</strong>
+                                        </td>
+                                    @else
+                                        @foreach($availableTahapans as $tahapanId)
+                                            @php
+                                                $totalPerTahapanSkpd = $rekap->where('kode_skpd', $currentSkpd)
+                                                    ->where('tahapan_id', $tahapanId)
+                                                    ->sum('total_pagu');
+                                            @endphp
+                                            <td class="text-end table-warning">
+                                                <strong>{{ number_format($totalPerTahapanSkpd, 2, ',', '.') }}</strong>
+                                            </td>
+                                        @endforeach
+                                    @endif
+                                </tr>
+                                @php $skpdTotal = 0; @endphp
+                            @endif
+                            
+                            <tr>
+                                <td class="text-center">{{ $no++ }}</td>
+                                <td class="text-center">{{ $item->kode_skpd }}</td>
+                                <td>{{ $item->nama_skpd }}</td>
+                                <td>{{ $item->kode_rekening }}</td>
+                                <td>{{ $item->nama_rekening }}</td>
+                                <td>{{ $item->nama_standar_harga }}</td>
+                                @if($tahapanId)
+                                    <td class="text-end">
+                                        {{ number_format($item->total_pagu, 2, ',', '.') }}
+                                    </td>
+                                    @php $skpdTotal += $item->total_pagu; @endphp
+                                @else
+                                    @foreach($availableTahapans as $tahapanId)
+                                        @php
+                                            $nilai = ($item->tahapan_id == $tahapanId) ? $item->total_pagu : 0;
+                                        @endphp
+                                        <td class="text-end">
+                                            {{ $nilai ? number_format($nilai, 2, ',', '.') : '-' }}
+                                        </td>
+                                    @endforeach
+                                @endif
+                            </tr>
+                            @php $currentSkpd = $item->kode_skpd; @endphp
                         @endforeach
-                        <th  style="text-align: center;">Selisih</th>
-                        <th  style="text-align: center;">Persentase Selisih</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($rekap as $kode_rekening => $data)
-                    <tr>
-                        <td>{{ $loop->iteration }}</td> <!-- Nomor Urut Manual -->
-                        <td>{{ $kode_rekening }}</td>
-                        <td class="nama-rekening">{{ $data->first()->nama_rekening }}</td>
-                        @foreach($data as $item)
-                            <td class="total-pagu-{{ $item->tahapan_id }}-{{ $item->tanggal_upload }}-{{ $item->jam_upload }}">
-                                {{ number_format($item->total_pagu, 2, ',', '.') }}
-                            </td>
-                        @endforeach
-                        <td class="selisih-pagu">{{ number_format($selisihPagu[$kode_rekening], 2, ',', '.') }}</td>
-                        <td class="persentase-selisih-pagu">{{ number_format($persentaseSelisihPagu[$kode_rekening], 2, ',', '.') }}%</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-                <tfoot>
-                    <tr class="table-dark">
-                        <th colspan="3" class="text-end">Total:</th>
-                        @foreach($rekap->first() as $data)
-                            <th id="totalPagu{{ $data->tahapan_id }}-{{ $data->tanggal_upload }}-{{ $data->jam_upload }}">
-                                {{ number_format($totalPagu[$data->tahapan_id . '_' . str_replace('-', '_', $data->tanggal_upload) . '_' . str_replace(':', '_', $data->jam_upload)], 2, ',', '.') }}
-                            </th>
-                        @endforeach
-                        <th id="totalSelisihPagu">{{ number_format($totalSelisihPagu, 2, ',', '.') }}</th>
-                        <th id="totalPersentaseSelisihPagu">{{ number_format($totalPersentaseSelisihPagu, 2, ',', '.') }}%</th>
-                    </tr>
-                </tfoot>
-            </table>
+                        
+                        <!-- Tampilkan total SKPD terakhir -->
+                        @if($currentSkpd !== null)
+                            <tr class="table-warning fw-bold">
+                                <td colspan="6" class="text-end">
+                                    <strong>TOTAL {{ $currentSkpd }} - {{ $rekap->where('kode_skpd', $currentSkpd)->first()->nama_skpd }}</strong>
+                                </td>
+                                @if($tahapanId)
+                                    <td class="text-end table-warning">
+                                        <strong>{{ number_format($skpdTotal, 2, ',', '.') }}</strong>
+                                    </td>
+                                @else
+                                    @foreach($availableTahapans as $tahapanId)
+                                        @php
+                                            $totalPerTahapanSkpd = $rekap->where('kode_skpd', $currentSkpd)
+                                                ->where('tahapan_id', $tahapanId)
+                                                ->sum('total_pagu');
+                                        @endphp
+                                        <td class="text-end table-warning">
+                                            <strong>{{ number_format($totalPerTahapanSkpd, 2, ',', '.') }}</strong>
+                                        </td>
+                                    @endforeach
+                                @endif
+                            </tr>
+                        @endif
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-secondary fw-bold">
+                            <th colspan="6" class="text-center">TOTAL</th>
+                            @if($tahapanId)
+                                <th class="text-end">
+                                    {{ number_format($totalPerTahapan[$tahapanId] ?? 0, 2, ',', '.') }}
+                                </th>
+                            @else
+                                @foreach($availableTahapans as $tahapanId)
+                                    <th class="text-end">
+                                        {{ number_format($totalPerTahapan[$tahapanId] ?? 0, 2, ',', '.') }}
+                                    </th>
+                                @endforeach
+                            @endif
+                        </tr>
+                        <tr class="table-dark fw-bold">
+                            <th colspan="6" class="text-center">GRAND TOTAL</th>
+                            @if($tahapanId)
+                                <th class="text-end">
+                                    {{ number_format($grandTotal, 2, ',', '.') }}
+                                </th>
+                            @else
+                                <th colspan="{{ count($availableTahapans) }}" class="text-end">
+                                    {{ number_format($grandTotal, 2, ',', '.') }}
+                                </th>
+                            @endif
+                        </tr>
+                    </tfoot>
+                </table>
+            @else
+                <div class="text-center alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    @if($keyword || $tahapanId)
+                        Tidak ada data yang sesuai dengan filter yang diterapkan. 
+                        Silakan coba kata kunci lain atau reset filter.
+                    @else
+                        Data tidak ditampilkan karena belum ada filter yang diterapkan.
+                    @endif
+                </div>
+            @endif
         </div>
 
        
