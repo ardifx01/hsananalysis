@@ -140,10 +140,9 @@ public function compareDataRek(Request $request)
             // Hanya tampilkan tahapan yang dipilih
             $availableTahapans = collect([$tahapanId]);
             
-            // Hitung total untuk tahapan yang dipilih
+            // Hitung total untuk tahapan yang dipilih sesuai dengan filter kata kunci
             $totalPerTahapan = [];
-            $totalPerTahapan[$tahapanId] = DataAnggaran::where('tahapan_id', $tahapanId)
-                ->sum('pagu');
+            $totalPerTahapan[$tahapanId] = $rekap->sum('total_pagu');
             
             // Grand total sama dengan total tahapan yang dipilih
             $grandTotal = $totalPerTahapan[$tahapanId];
@@ -154,11 +153,10 @@ public function compareDataRek(Request $request)
                 ->orderBy('tahapan_id')
                 ->pluck('tahapan_id');
             
-            // Hitung total per tahapan untuk footer
+            // Hitung total per tahapan untuk footer sesuai dengan filter kata kunci
             $totalPerTahapan = [];
             foreach ($availableTahapans as $tahapanId) {
-                $totalPerTahapan[$tahapanId] = DataAnggaran::where('tahapan_id', $tahapanId)
-                    ->sum('pagu');
+                $totalPerTahapan[$tahapanId] = $rekap->where('tahapan_id', $tahapanId)->sum('total_pagu');
             }
             
             // Hitung grand total
