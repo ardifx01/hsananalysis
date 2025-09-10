@@ -82,10 +82,32 @@
 
 <div class="table-container">
 
+    <!-- Filter Tahapan -->
+    <div class="mb-3 row">
+        <div class="col-md-4">
+            <label for="tahapanFilter" class="form-label"><strong>Filter Tahapan Anggaran:</strong></label>
+            <select id="tahapanFilter" class="form-select" onchange="filterByTahapan()">
+                @foreach($tahapans as $tahapan)
+                    <option value="{{ $tahapan->id }}" {{ $tahapan->id == $tahapanId ? 'selected' : '' }}>
+                        {{ $tahapan->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-8">
+            <div class="mt-4 alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                <strong>Info:</strong> Data yang ditampilkan berdasarkan tahapan anggaran yang dipilih.
+                <br>
+                <small class="text-muted">Tahapan saat ini: <strong>{{ $tahapans->where('id', $tahapanId)->first()->name ?? 'Tahapan ' . $tahapanId }}</strong></small>
+            </div>
+        </div>
+    </div>
+
     <!-- 🔥 Tombol Simpan Semua -->
     <button id="saveAllButton" class="btn btn-primary save-all-button">Simpan Semua</button>
     <button onclick="exportToExcel()" class="btn btn-success">Export ke Excel</button>
-<button onclick="exportToPDF()" class="btn btn-danger">Export ke PDF</button>
+    <button onclick="exportToPDF()" class="btn btn-danger">Export ke PDF</button>
 
 
     <table id="rekapTable" class="table table-bordered">
@@ -94,7 +116,7 @@
                 <th class="text-center">No</th>
                 <th>Nama OPD</th>
                 <th>Nama Rekening</th>
-                <th class="text-end">Pagu Murni</th>
+                <th class="text-end">{{ $tahapans->where('id', $tahapanId)->first()->name ?? 'Pagu Murni' }}</th>
                 <th class="text-end">Total Perjalanan Dinas OPD</th>
                 <th class="text-end">Slider Persentase</th>
                 <th>Persentase Pengurangan</th>
@@ -499,7 +521,13 @@
      // 🔥 Jalankan update saat halaman pertama kali dimuat
     updateValues();
 
-    
+    // Function untuk filter berdasarkan tahapan
+    window.filterByTahapan = function() {
+        const tahapanId = document.getElementById('tahapanFilter').value;
+        const currentUrl = new URL(window.location);
+        currentUrl.searchParams.set('tahapan_id', tahapanId);
+        window.location.href = currentUrl.toString();
+    };
 
 });
 

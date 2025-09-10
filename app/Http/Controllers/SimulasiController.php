@@ -362,8 +362,14 @@ public function rekapPerjalananDinas()
 }
 
 
-public function perjalananDinasView()
+public function perjalananDinasView(Request $request)
 {
+    // Ambil semua tahapan untuk dropdown filter
+    $tahapans = DB::table('tahapan')->orderBy('id')->get();
+    
+    // Ambil tahapan yang dipilih (default tahapan 1)
+    $tahapanId = $request->get('tahapan_id', 1);
+    
     $data = DB::table('data_anggarans')
         ->leftJoin('opd_rekening_penyesuaian', function ($join) {
             $join->on('data_anggarans.kode_rekening', '=', 'opd_rekening_penyesuaian.kode_rekening')
@@ -375,7 +381,7 @@ public function perjalananDinasView()
             'data_anggarans.nama_skpd AS nama_opd',
             'data_anggarans.kode_rekening',
             'data_anggarans.nama_rekening',
-            DB::raw('SUM(CASE WHEN tahapan_id = "1" THEN pagu ELSE 0 END) as pagu_original'),
+            DB::raw("SUM(CASE WHEN tahapan_id = {$tahapanId} THEN pagu ELSE 0 END) as pagu_original"),
             DB::raw('COALESCE(opd_rekening_penyesuaian.persentase_penyesuaian, rekening_penyesuaian.persentase_penyesuaian, 0) as persentase_penyesuaian')
         )
         ->where('data_anggarans.nama_rekening', 'LIKE', '%Perjalanan Dinas%')
@@ -412,7 +418,10 @@ public function perjalananDinasView()
         $row->total_setelah_pengurangan_perjalanan_dinas = $totalSetelahPenguranganPerOpd[$row->nama_opd] ?? 0;
     }
 
-    return view('simulasi.perjalanan-dinas', compact('data'));
+    // Urutkan data berdasarkan total pagu perjalanan dinas terbesar
+    $data = $data->sortByDesc('total_perjalanan_dinas')->values();
+
+    return view('simulasi.perjalanan-dinas', compact('data', 'tahapans', 'tahapanId'));
 }
 
 
