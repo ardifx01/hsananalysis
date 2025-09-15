@@ -109,6 +109,21 @@
                         </li>
 
                         <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('data-pendapatan.index') ? 'active' : '' }}"
+                                href="{{ route('data-pendapatan.index') }}">
+                                <i class="icon">
+                                    <svg class="icon-10" xmlns="http://www.w3.org/2000/svg" width="10"
+                                        viewBox="0 0 24 24" fill="currentColor">
+                                        <path
+                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 9h-4V7h-2v4H7v2h4v4h2v-4h4z" />
+                                    </svg>
+                                </i>
+                                <i class="sidenav-mini-icon"> D </i>
+                                <span class="item-name">Data Pendapatan</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('data') ? 'active' : '' }}"
                                 href="{{ route('data') }}">
                                 <i class="icon">
@@ -119,7 +134,7 @@
                                     </svg>
                                 </i>
                                 <i class="sidenav-mini-icon"> K </i>
-                                <span class="item-name">Data Anggaran</span>
+                                <span class="item-name">Data Belanja</span>
                             </a>
                         </li>
 
@@ -152,6 +167,8 @@
                                 <span class="item-name">Realisasi</span>
                             </a>
                         </li>
+
+                       
 
                        
 

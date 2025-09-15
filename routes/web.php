@@ -40,6 +40,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/kode-rekening/import', [KodeRekeningController::class, 'import'])->name('kode-rekening.import');
     Route::get('/kode-rekening/template/download', [KodeRekeningController::class, 'downloadTemplate'])->name('kode-rekening.template.download');
 
+    //Data Pendapatan
+    Route::get('/data-pendapatan', [App\Http\Controllers\DataPendapatanController::class, 'index'])->name('data-pendapatan.index');
+    Route::post('/data-pendapatan/upload', [App\Http\Controllers\DataPendapatanController::class, 'upload'])->name('data-pendapatan.upload');
+    Route::delete('data-pendapatan/{tahapan_id}/{tanggal_upload}/{jam_upload}', [App\Http\Controllers\DataPendapatanController::class, 'destroy'])->name('data-pendapatan.destroy');
+
     // compare data
     Route::get('/compare-opd', [CompareController::class, 'compareOpd'])->name('compare-opd');
     Route::get('/compare/rek', [CompareController::class, 'compareDataRek'])->name('compare-rek');
