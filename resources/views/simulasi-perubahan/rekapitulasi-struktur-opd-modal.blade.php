@@ -33,6 +33,9 @@
                     <a href="{{ route('simulasi.rekapitulasi-struktur-opd', ['tahapan_id' => $tahapanId]) }}" class="btn btn-info btn-sm">
                         <i class="bi bi-list-ul"></i> Rekap Detail
                     </a>
+                    <a href="{{ route('simulasi.struktur-belanja-apbd', ['tahapan_id' => $tahapanId]) }}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-diagram-3"></i> Struktur Belanja APBD
+                    </a>
                 </div>
             </div>
         @endif

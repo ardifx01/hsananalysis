@@ -159,6 +159,9 @@ Route::middleware('auth')->group(function () {
         // Rekapitulasi Struktur OPD dengan Modal Digabung
         Route::get('/simulasi/rekapitulasi-struktur-opd-modal', [App\Http\Controllers\SimulasiPerubahanController::class, 'rekapitulasiStrukturOpdModal'])->name('simulasi.rekapitulasi-struktur-opd-modal');
         Route::get('/simulasi/rekapitulasi-struktur-opd-modal/export-excel', [App\Http\Controllers\SimulasiPerubahanController::class, 'exportExcelModal'])->name('simulasi.rekapitulasi-struktur-opd-modal.export-excel');
+        
+        Route::get('/simulasi/struktur-belanja-apbd', [App\Http\Controllers\SimulasiPerubahanController::class, 'strukturBelanjaApbd'])->name('simulasi.struktur-belanja-apbd');
+        Route::get('/simulasi/struktur-belanja-apbd/export-excel', [App\Http\Controllers\SimulasiPerubahanController::class, 'exportExcelStrukturApbd'])->name('simulasi.struktur-belanja-apbd.export-excel');
 
         // Realisasi
         Route::resource('realisasi', RealisasiController::class);

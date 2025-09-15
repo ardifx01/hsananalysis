@@ -10,6 +10,7 @@ use App\Models\SimulasiPenyesuaianAnggaran;
 use App\Models\Realisasi;
 use App\Exports\RekapitulasiStrukturOpdExport;
 use App\Exports\RekapitulasiStrukturOpdModalExport;
+use App\Exports\StrukturBelanjaApbdExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class SimulasiPerubahanController extends Controller
@@ -613,5 +614,133 @@ class SimulasiPerubahanController extends Controller
         $filename = 'rekapitulasi-struktur-opd-modal-' . $tahapanName . '-' . date('Y-m-d') . '.xlsx';
 
         return Excel::download(new RekapitulasiStrukturOpdModalExport($rekapitulasiData, $kodeRekenings, $tahapanName), $filename);
+    }
+
+    public function strukturBelanjaApbd(Request $request)
+    {
+        $tahapans = Tahapan::orderBy('id')->get();
+
+        // Ambil semua kode rekening yang diawali angka 5 dan hanya 2 atau 3 segmen (level 1 dan 2)
+        $kodeRekenings = KodeRekening::where(function($q) {
+            $q->whereRaw("kode_rekening REGEXP '^5\\.[0-9]+$'") // 2 segmen, contoh: 5.1 (level 1)
+              ->orWhereRaw("kode_rekening REGEXP '^5\\.[0-9]+\\.[0-9]{2}$'"); // 3 segmen, contoh: 5.1.01 (level 2)
+        })
+        ->orderBy('kode_rekening')
+        ->get();
+
+        $strukturData = collect();
+        
+        // Ambil semua data simulasi penyesuaian anggaran
+        $simulasiData = SimulasiPenyesuaianAnggaran::all();
+        
+        // Ambil semua data realisasi
+        $realisasiData = Realisasi::all();
+
+        // Loop untuk setiap kode rekening
+        foreach ($kodeRekenings as $kr) {
+            $is2Segmen = count(explode('.', $kr->kode_rekening)) === 2;
+            $is3Segmen = count(explode('.', $kr->kode_rekening)) === 3;
+
+            // Hitung total pagu untuk setiap tahapan
+            $paguPerTahapan = [];
+            foreach ($tahapans as $tahapan) {
+                $totalPagu = DataAnggaran::where('tahapan_id', $tahapan->id)
+                    ->where('kode_rekening', 'like', $kr->kode_rekening . '%')
+                    ->sum('pagu');
+                
+                $paguPerTahapan[$tahapan->id] = $totalPagu;
+            }
+
+            // Hitung total realisasi
+            $totalRealisasi = $realisasiData
+                ->where('kode_rekening', $kr->kode_rekening)
+                ->sum('realisasi');
+
+            // Hitung total penyesuaian
+            $totalPenyesuaian = $simulasiData
+                ->where('kode_rekening', $kr->kode_rekening)
+                ->sum('nilai_penyesuaian');
+
+            // Tambahkan ke struktur data
+            $strukturData->push([
+                'kode_rekening' => $kr->kode_rekening,
+                'nama_rekening' => $kr->uraian,
+                'pagu_per_tahapan' => $paguPerTahapan,
+                'realisasi' => $totalRealisasi,
+                'penyesuaian' => $totalPenyesuaian,
+                'is_2_segmen' => $is2Segmen,
+                'is_3_segmen' => $is3Segmen,
+                'level' => $is2Segmen ? 1 : 2
+            ]);
+        }
+
+        return view('simulasi-perubahan.struktur-belanja-apbd', [
+            'tahapans' => $tahapans,
+            'kodeRekenings' => $kodeRekenings,
+            'strukturData' => $strukturData,
+        ]);
+    }
+
+    public function exportExcelStrukturApbd(Request $request)
+    {
+        $tahapans = Tahapan::orderBy('id')->get();
+        
+        // Ambil semua kode rekening yang diawali angka 5 dan hanya 2 atau 3 segmen (level 1 dan 2)
+        $kodeRekenings = KodeRekening::where(function($q) {
+            $q->whereRaw("kode_rekening REGEXP '^5\\.[0-9]+$'") // 2 segmen, contoh: 5.1 (level 1)
+              ->orWhereRaw("kode_rekening REGEXP '^5\\.[0-9]+\\.[0-9]{2}$'"); // 3 segmen, contoh: 5.1.01 (level 2)
+        })
+        ->orderBy('kode_rekening')
+        ->get();
+
+        $strukturData = collect();
+        
+        // Ambil semua data simulasi penyesuaian anggaran
+        $simulasiData = SimulasiPenyesuaianAnggaran::all();
+        
+        // Ambil semua data realisasi
+        $realisasiData = Realisasi::all();
+
+        // Loop untuk setiap kode rekening
+        foreach ($kodeRekenings as $kr) {
+            $is2Segmen = count(explode('.', $kr->kode_rekening)) === 2;
+            $is3Segmen = count(explode('.', $kr->kode_rekening)) === 3;
+
+            // Hitung total pagu untuk setiap tahapan
+            $paguPerTahapan = [];
+            foreach ($tahapans as $tahapan) {
+                $totalPagu = DataAnggaran::where('tahapan_id', $tahapan->id)
+                    ->where('kode_rekening', 'like', $kr->kode_rekening . '%')
+                    ->sum('pagu');
+                
+                $paguPerTahapan[$tahapan->id] = $totalPagu;
+            }
+
+            // Hitung total realisasi
+            $totalRealisasi = $realisasiData
+                ->where('kode_rekening', $kr->kode_rekening)
+                ->sum('realisasi');
+
+            // Hitung total penyesuaian
+            $totalPenyesuaian = $simulasiData
+                ->where('kode_rekening', $kr->kode_rekening)
+                ->sum('nilai_penyesuaian');
+
+            // Tambahkan ke struktur data
+            $strukturData->push([
+                'kode_rekening' => $kr->kode_rekening,
+                'nama_rekening' => $kr->uraian,
+                'pagu_per_tahapan' => $paguPerTahapan,
+                'realisasi' => $totalRealisasi,
+                'penyesuaian' => $totalPenyesuaian,
+                'is_2_segmen' => $is2Segmen,
+                'is_3_segmen' => $is3Segmen,
+                'level' => $is2Segmen ? 1 : 2
+            ]);
+        }
+
+        $filename = 'struktur-belanja-apbd-semua-tahapan-' . date('Y-m-d') . '.xlsx';
+
+        return Excel::download(new StrukturBelanjaApbdExport($strukturData, $tahapans), $filename);
     }
 }
