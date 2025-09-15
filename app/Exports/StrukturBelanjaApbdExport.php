@@ -12,8 +12,9 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Font;
 
 class StrukturBelanjaApbdExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths, WithTitle, WithEvents
 {
@@ -28,7 +29,25 @@ class StrukturBelanjaApbdExport implements FromCollection, WithHeadings, WithMap
 
     public function collection()
     {
-        return $this->strukturData;
+        $data = $this->strukturData;
+        
+        // Tambahkan row total
+        $totalRow = [
+            'kode_rekening' => 'TOTAL',
+            'nama_rekening' => '',
+            'level' => '',
+            'pagu_per_tahapan' => []
+        ];
+        
+        // Hitung total per tahapan (hanya level 2)
+        foreach ($this->tahapans as $tahapan) {
+            $totalPerTahapan = $data->where('level', 2)->sum(function($item) use ($tahapan) {
+                return $item['pagu_per_tahapan'][$tahapan->id] ?? 0;
+            });
+            $totalRow['pagu_per_tahapan'][$tahapan->id] = $totalPerTahapan;
+        }
+        
+        return $data->push($totalRow);
     }
 
     public function headings(): array
@@ -49,18 +68,30 @@ class StrukturBelanjaApbdExport implements FromCollection, WithHeadings, WithMap
 
     public function map($item): array
     {
-        static $no = 1;
+        static $rowNumber = 0;
+        $rowNumber++;
         
-        $row = [
-            $no++,
-            $item['kode_rekening'],
-            $item['nama_rekening'],
-            $item['level']
-        ];
+        // Jika ini adalah row total, gunakan format khusus
+        if ($item['kode_rekening'] === 'TOTAL') {
+            $row = [
+                '',
+                'TOTAL',
+                '',
+                ''
+            ];
+        } else {
+            $row = [
+                $rowNumber,
+                $item['kode_rekening'],
+                $item['nama_rekening'],
+                $item['level']
+            ];
+        }
         
+        // Tambahkan data pagu per tahapan
         foreach ($this->tahapans as $tahapan) {
             $pagu = $item['pagu_per_tahapan'][$tahapan->id] ?? 0;
-            $row[] = $pagu ? number_format($pagu, 2, ',', '.') : '-';
+            $row[] = $pagu;
         }
         
         return $row;
@@ -90,7 +121,7 @@ class StrukturBelanjaApbdExport implements FromCollection, WithHeadings, WithMap
                 ],
             ],
             // Data rows
-            'A:J' => [
+            'A:Z' => [
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -101,8 +132,8 @@ class StrukturBelanjaApbdExport implements FromCollection, WithHeadings, WithMap
                     'vertical' => Alignment::VERTICAL_CENTER,
                 ],
             ],
-            // Number columns (right align)
-            'E:J' => [
+            // Number columns (right align) - mulai dari kolom E
+            'E:Z' => [
                 'alignment' => [
                     'horizontal' => Alignment::HORIZONTAL_RIGHT,
                 ],
@@ -112,22 +143,18 @@ class StrukturBelanjaApbdExport implements FromCollection, WithHeadings, WithMap
 
     public function columnWidths(): array
     {
-        $widths = [
+        return [
             'A' => 8,   // No
             'B' => 20,  // Kode Rekening
             'C' => 50,  // Nama Rekening
             'D' => 10,  // Level
+            'E' => 20,  // Tahapan 1
+            'F' => 20,  // Tahapan 2
+            'G' => 20,  // Tahapan 3
+            'H' => 20,  // Tahapan 4
+            'I' => 20,  // Tahapan 5
+            'J' => 20,  // Tahapan 6
         ];
-        
-        // Add column widths for each tahapan
-        $columnIndex = 5; // Start from column E
-        foreach ($this->tahapans as $tahapan) {
-            $column = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnIndex);
-            $widths[$column] = 20; // Pagu per tahapan
-            $columnIndex++;
-        }
-        
-        return $widths;
     }
 
     public function title(): string
@@ -143,7 +170,7 @@ class StrukturBelanjaApbdExport implements FromCollection, WithHeadings, WithMap
                 
                 // Set title
                 $sheet->insertNewRowBefore(1, 2);
-                $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(3 + count($this->tahapans));
+                $lastColumn = chr(ord('A') + 3 + count($this->tahapans) - 1);
                 $sheet->mergeCells('A1:' . $lastColumn . '1');
                 $sheet->setCellValue('A1', 'STRUKTUR BELANJA APBD - SEMUA TAHAPAN TAHUN 2025');
                 $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
@@ -158,9 +185,7 @@ class StrukturBelanjaApbdExport implements FromCollection, WithHeadings, WithMap
                 $sheet->getRowDimension(3)->setRowHeight(20);
                 
                 // Auto-size columns
-                $totalColumns = 4 + count($this->tahapans);
-                for ($i = 1; $i <= $totalColumns; $i++) {
-                    $column = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
+                foreach (range('A', $lastColumn) as $column) {
                     $sheet->getColumnDimension($column)->setAutoSize(true);
                 }
             },
