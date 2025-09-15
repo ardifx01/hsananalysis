@@ -406,6 +406,7 @@ public function compareDataOpdRek(Request $request)
             DB::raw('SUM(CASE WHEN tahapan_id = ' . $tahapan2 . ' THEN pagu ELSE 0 END) as pagu_revisi')
         )
         ->groupBy('kode_sub_kegiatan', 'nama_sub_kegiatan', 'kode_sub_unit', 'nama_sub_unit','kode_skpd', 'nama_skpd')
+        ->orderBy('kode_skpd', 'asc')
         ->orderBy('kode_sub_unit', 'asc')
         ->orderBy('kode_sub_kegiatan', 'asc');
     
@@ -429,14 +430,21 @@ public function compareDataOpdRek(Request $request)
         )
         ->where('tahapan_id', $tahapan2)
         ->whereNotIn('kode_sub_kegiatan', $subQueryTahapan1)
-        ->groupBy('kode_sub_kegiatan', 'nama_sub_kegiatan', 'kode_sub_unit', 'nama_sub_unit','kode_skpd', 'nama_skpd');
+        ->groupBy('kode_sub_kegiatan', 'nama_sub_kegiatan', 'kode_sub_unit', 'nama_sub_unit','kode_skpd', 'nama_skpd')
+        ->orderBy('kode_skpd', 'asc')
+        ->orderBy('kode_sub_unit', 'asc')
+        ->orderBy('kode_sub_kegiatan', 'asc');
     
         if (!empty($kodeOpd)) {
             $newDataQuery->where('kode_skpd', $kodeOpd);
         }
     
-        // Gabungkan kedua query
-        $rekap = $baseQuery->union($newDataQuery)->get();
+        // Gabungkan kedua query dan urutkan berdasarkan kode_skpd, kode_sub_unit, dan kode_sub_kegiatan
+        $rekap = $baseQuery->union($newDataQuery)
+            ->orderBy('kode_opd', 'asc')
+            ->orderBy('nama_sub_unit', 'asc')
+            ->orderBy('kode_sub_kegiatan', 'asc')
+            ->get();
     
         // Hitung selisih dan persentase perubahan
         foreach ($rekap as $item) {

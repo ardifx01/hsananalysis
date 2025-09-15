@@ -96,7 +96,7 @@
     </select>
     </div>
     </div>
-    <button type="submit" class="btn btn-primary mt-2">Filter</button>
+    <button type="submit" class="mt-2 btn btn-primary">Filter</button>
 </form>
 
 <div class="table-container">
@@ -104,6 +104,7 @@
         <thead class="table-dark">
             <tr>
                 <th class="text-center">No</th>
+                <th>Kode SKPD</th>
                 <th>Nama OPD</th>
                 <th>Sub Unit</th>
                 <th>Kode Sub Kegiatan</th>
@@ -130,6 +131,7 @@
             @foreach($rekap as $index => $row)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
+                <td>{{ $row->kode_opd }}</td>
                 <td>{{ $row->nama_opd }}</td>
                 <td>{{ $row->nama_sub_unit }}</td>
                 <td>{{ $row->kode_sub_kegiatan }}</td>
@@ -143,7 +145,7 @@
         </tbody>
         <tfoot class="table-dark">
             <tr>
-                <th colspan="5" class="text-end">Total:</th>
+                <th colspan="6" class="text-end">Total:</th>
                 <th class="text-end" id="totalPaguOriginal">0</th>
                 <th class="text-end" id="totalPaguRevisi">0</th>
                 <th class="text-end" id="totalSelisih">0</th>
@@ -210,7 +212,7 @@
                     exportOptions: { columns: ':visible', modifier: { page: 'all' } },
                     customize: function(doc) {
                         doc.content[1].table.body.push([
-                            { text: "Total", bold: true, alignment: "right", colSpan: 4 }, {}, {}, {},
+                            { text: "Total", bold: true, alignment: "right", colSpan: 5 }, {}, {}, {}, {},
                             { text: $('#totalPaguOriginal').text(), bold: true },
                             { text: $('#totalPaguRevisi').text(), bold: true },
                             { text: $('#totalSelisih').text(), bold: true },
